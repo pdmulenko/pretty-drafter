@@ -1,0 +1,128 @@
+:root {
+    --toolbar-h: 55px;
+}
+
+body {
+    margin: 0;
+    overflow: hidden;
+    user-select: none;
+}
+
+#toolbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--toolbar-h);
+    background: #ddd;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    z-index: 1000;
+}
+
+#toolbar .toolBlock {
+    display: flex;
+    margin-right: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.toolblock-title {
+    font-size: 12px;
+    opacity: 0.7;
+    user-select: none;
+    line-height: 1;
+}
+
+.toolblock-buttons {
+    display: flex;
+    gap: 4px;
+}
+
+#toolbar button {
+    width: 30px;
+    height: 30px;
+    border: 2px solid #ddd;
+    cursor: pointer;
+    font-size: 22px;
+    text-align: center;
+    padding: 0;
+}
+
+#toolbar #grid {
+    font-size: 27px;
+}
+
+#toolbar button.colorBtn {
+    opacity: 40%;
+}
+#toolbar button.active {
+    background-color: #4aa3ff;
+    border: 2px solid #4aa3ff;
+    opacity: 100%;
+}
+
+.fa-icon {
+    width: 26px;
+    height: 26px;
+    fill: black;
+}
+
+#canvasWrapper {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: var(--toolbar-h);
+    bottom: 0;
+
+    background-color: white;
+}
+
+.grid {
+    background-image:
+        linear-gradient(to right, #ddd 1px, transparent 1px),
+        linear-gradient(to bottom, #ddd 1px, transparent 1px);
+    background-size: 30px 30px;
+}
+
+canvas {
+    position: absolute;
+    inset: 0;
+    display: block;
+}
+
+canvas.pencilCursor {
+    cursor: crosshair;
+}
+
+canvas.eraserCursor {
+    cursor: none;
+}
+
+#cursorCircle {
+    position: absolute;
+    border: 1px solid black;
+    border-radius: 50%;
+    pointer-events: none;
+    width: 20px;
+    /* размер ластика */
+    height: 20px;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+}
+
+#editableCanvas {
+    pointer-events: none;
+}
+
+#editableCanvas.active {
+    z-index: 10;
+}
+
+#editableCanvas.highlighter {
+    mix-blend-mode: multiply;
+    opacity: 0.2;
+}

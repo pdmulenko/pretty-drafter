@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Pretty Drafter</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <div id="toolbar">
+            <!-- инструменты рисования -->
+            <div class="toolBlock">
+                <div class="toolblock-title">Brushes (P)</div>
+                <div class="toolblock-buttons">
+                    <button id="pencil">
+                        <svg
+                            class="fa-icon"
+                            viewBox="0 0 640 640"
+                            preserveAspectRatio="xMidYMid meet"
+                        >
+                            <use href="./icons.svg#fa-pencil" />
+                        </svg>
+                    </button>
+                    <button id="eraser">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-eraser" />
+                        </svg>
+                    </button>
+                    <button id="highlighter">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-highlighter" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- инструменты геометрии -->
+            <div class="toolBlock">
+                <div class="toolblock-title">Primitives (G)</div>
+                <div class="toolblock-buttons">
+                    <button id="line">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-line" />
+                        </svg>
+                    </button>
+                    <button id="polyline">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-polyline" />
+                        </svg>
+                    </button>
+                    <button id="triangle">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-triangle" />
+                        </svg>
+                    </button>
+                    <button id="rect">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-rect" />
+                        </svg>
+                    </button>
+                    <button id="parallelogram">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-parallelogram" />
+                        </svg>
+                    </button>
+                    <button id="trapezoid">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-trapezoid" />
+                        </svg>
+                    </button>
+                    <button id="circle">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-circle" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- цвет рисования -->
+            <div class="toolBlock">
+                <div class="toolblock-title">Line color (C)</div>
+                <div class="toolblock-buttons">
+                    <button
+                        class="colorBtn"
+                        style="background: black"
+                        data-light="rgb(150,150,150)"
+                    ></button>
+                    <button
+                        class="colorBtn"
+                        style="background: blue"
+                        data-light="rgb(150,180,255)"
+                    ></button>
+                    <button
+                        class="colorBtn"
+                        style="background: red"
+                        data-light="rgb(255,180,180)"
+                    ></button>
+                    <button
+                        class="colorBtn"
+                        style="background: green"
+                        data-light="rgb(180,255,180)"
+                    ></button>
+                    <button
+                        class="colorBtn"
+                        style="background: orange"
+                        data-light="rgb(255,210,150)"
+                    ></button>
+                    <button
+                        class="colorBtn"
+                        style="background: purple"
+                        data-light="rgb(210,180,255)"
+                    ></button>
+                    <button
+                        class="colorBtn"
+                        style="background: gray"
+                        data-light="rgb(200,200,200)"
+                    ></button>
+                </div>
+            </div>
+
+            <!-- толщины линий -->
+            <div class="toolBlock">
+                <div class="toolblock-title">Line thickness (T)</div>
+                <div class="toolblock-buttons">
+                    <button class="thicknessBtn active" data-size="2">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-stroke-thin" />
+                        </svg>
+                    </button>
+                    <button class="thicknessBtn" data-size="5">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-stroke-medium" />
+                        </svg>
+                    </button>
+                    <button class="thicknessBtn" data-size="10">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-stroke-thick" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- фон доски -->
+            <div class="toolBlock">
+                <div class="toolblock-title">Background (B)</div>
+                <div class="toolblock-buttons">
+                    <button id="grid" class="backgroundBtn" style="width: 80px">
+                        <span style="position: relative; top: -2px">▦</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- верхний слой -->
+            <div class="toolBlock">
+                <div class="toolblock-title">Top layer (1)</div>
+                <div class="toolblock-buttons">
+                    <button
+                        id="toplayer"
+                        class="layerBtn"
+                        data-canvas="boardTopCanvas"
+                    >
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-toplayer" />
+                        </svg>
+                    </button>
+                    <button class="visibilityBtn" data-canvas="boardTopCanvas">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-visible" />
+                        </svg>
+                    </button>
+                    <button class="clearBtn" data-canvas="boardTopCanvas">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-trashbin" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <!-- средний слой -->
+            <div class="toolBlock">
+                <div class="toolblock-title">Middle Layer (2)</div>
+                <div class="toolblock-buttons">
+                    <button
+                        id="midlayer"
+                        class="layerBtn"
+                        data-canvas="boardMiddleCanvas"
+                    >
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-midlayer" />
+                        </svg>
+                    </button>
+                    <button
+                        class="visibilityBtn"
+                        data-canvas="boardMiddleCanvas"
+                    >
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-visible" />
+                        </svg>
+                    </button>
+                    <button class="clearBtn" data-canvas="boardMiddleCanvas">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-trashbin" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <!-- нижний слой -->
+            <div class="toolBlock">
+                <div class="toolblock-title">Bottom layer (3)</div>
+                <div class="toolblock-buttons">
+                    <button
+                        id="botlayer"
+                        class="layerBtn"
+                        data-canvas="boardBottomCanvas"
+                    >
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-botlayer" />
+                        </svg>
+                    </button>
+                    <button
+                        class="visibilityBtn"
+                        data-canvas="boardBottomCanvas"
+                    >
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-visible" />
+                        </svg>
+                    </button>
+                    <button class="clearBtn" data-canvas="boardBottomCanvas">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-trashbin" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="cursorCircle"></div>
+        <div id="canvasWrapper">
+            <canvas id="pointerCanvas" style="z-index: 5"></canvas>
+            <canvas id="editableCanvas" style="z-index: 4"></canvas>
+            <canvas
+                id="boardTopCanvas"
+                class="boardLayer"
+                style="z-index: 3"
+            ></canvas>
+            <canvas
+                id="boardMiddleCanvas"
+                class="boardLayer"
+                style="z-index: 2"
+            ></canvas>
+            <canvas
+                id="boardBottomCanvas"
+                class="boardLayer"
+                style="z-index: 1"
+            ></canvas>
+        </div>
+        <script type="module" src="board.js"></script>
+    </body>
+</html>
