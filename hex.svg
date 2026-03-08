@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="326.8"
+     height="283"
+     viewBox="0 0 326.8 283">
+
+  <!-- Горизонтальные -->
+    <line x1="0" y1="0"   x2="326.8" y2="0"   stroke="#999" stroke-width="1"/>
+    <line x1="0" y1="141.5" x2="326.8" y2="141.5" stroke="#999" stroke-width="1"/>
+    <line x1="0" y1="283"   x2="326.8" y2="283"   stroke="#999" stroke-width="1"/>
+
+  <!-- Диагонали / изометрическая сетка -->
+    <line x1="0" y1="141.5" x2="81.7" y2="0" stroke="#999" stroke-width="1"/>
+    <line x1="81.7" y1="283" x2="245.1" y2="0" stroke="#999" stroke-width="1"/>
+    <line x1="245.1" y1="283" x2="326.8" y2="141.5" stroke="#999" stroke-width="1"/>
+
+    <line x1="0" y1="141.5" x2="81.7" y2="283" stroke="#999" stroke-width="1"/>
+    <line x1="81.7" y1="0" x2="245.1" y2="283" stroke="#999" stroke-width="1"/>
+    <line x1="245.1" y1="0" x2="326.8" y2="141.5" stroke="#999" stroke-width="1"/>
+
+</svg>

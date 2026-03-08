@@ -1,5 +1,5 @@
 let activeImage = null;
-let tempCanvas, tempCtx, mainCtx;
+let pointerCanvas, tempCanvas, tempCtx, mainCtx;
 let dpr = window.devicePixelRatio || 1;
 
 const HANDLE = 10;
@@ -24,6 +24,13 @@ export function initImageTool({
 
 export function hasActiveImage() {
     return !!activeImage;
+}
+
+export function deleteActiveImage() {
+    if (!activeImage) return;
+    activeImage = null;
+    tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+    //tempCanvas.classList.remove("active");
 }
 
 export function insertImage(img) {
@@ -198,7 +205,8 @@ export function imagePointerDown(e, canvas) {
         return true;
     }
 
-    return false;
+    // do nothing
+    return true;
 }
 
 export function imagePointerMove(e, canvas) {
@@ -383,7 +391,5 @@ export function commitImage() {
     mainCtx.drawImage(img, -width / 2, -height / 2, width, height);
     mainCtx.restore();
 
-    activeImage = null;
-    tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
-    tempCanvas.classList.remove("active");
+    deleteActiveImage();
 }

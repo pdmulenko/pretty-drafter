@@ -1,4 +1,4 @@
-import { getPencilProperties } from "./board.js";
+import { getPencilProperties, commitDrawing } from "./board.js";
 
 // ---------------------------------
 // --- фигуры ---
@@ -52,6 +52,14 @@ export function hasActiveGeom() {
     return !!activeGeom;
 }
 
+export function deleteActiveGeom() {
+    if (!activeGeom) return;
+
+    if (activeGeom.type !== "line")
+        tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+    activeGeom = null;
+}
+
 // ---------------------------------
 // ---------- интеракция -----------
 // ---------------------------------
@@ -64,6 +72,7 @@ export function figuresPointerDown(e, canvas) {
     if (!activeGeom) {
         switch (tool) {
             case "line":
+                commitDrawing();
                 activeGeom = {
                     type: "line",
                     start: pos,
@@ -288,7 +297,6 @@ function setCursorForGeom(g, pos, canvas) {
 
         if (hit.type === "resize") hit = getHitTest(g, pos);
         const resizeDir = hit.type === "resize" ? hit.cursor : hit.type;
-        console.log(hit.type, resizeDir);
 
         const map = {
             nw: "nwse-resize",
@@ -565,38 +573,39 @@ function drawPolyline(ctx, geom, final = false) {
 export function commitGeom() {
     if (!activeGeom) return;
 
-    mainCtx.save();
+    const ctx = activeGeom.type === "line" ? tempCtx : mainCtx;
+    ctx.save();
     const pencilProps = getPencilProperties();
-    mainCtx.strokeStyle = pencilProps.color;
-    mainCtx.lineWidth = pencilProps.lineWidth;
+    ctx.strokeStyle = pencilProps.color;
+    ctx.lineWidth = pencilProps.lineWidth;
 
     switch (activeGeom.type) {
         case "line":
-            drawLine(mainCtx, activeGeom.start, activeGeom.end);
+            drawLine(ctx, activeGeom.start, activeGeom.end);
             break;
         case "polyline":
-            drawPolyline(mainCtx, activeGeom, true);
+            drawPolyline(ctx, activeGeom, true);
             break;
         case "rect":
-            Rect.drawRectEdit(mainCtx, activeGeom, true);
+            Rect.drawRectEdit(ctx, activeGeom, true);
             break;
         case "triangle":
-            Triangle.drawTriangleEdit(mainCtx, activeGeom, true);
+            Triangle.drawTriangleEdit(ctx, activeGeom, true);
             break;
         case "trapezoid":
-            Trapezoid.drawTrapezoidEdit(mainCtx, activeGeom, true);
+            Trapezoid.drawTrapezoidEdit(ctx, activeGeom, true);
             break;
         case "parallelogram":
-            Parallelogram.drawParallelogramEdit(mainCtx, activeGeom, true);
+            Parallelogram.drawParallelogramEdit(ctx, activeGeom, true);
             break;
         case "circle":
-            Circle.drawCircleEdit(mainCtx, activeGeom, true);
+            Circle.drawCircleEdit(ctx, activeGeom, true);
             break;
     }
 
-    mainCtx.restore();
-    activeGeom = null;
-    tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+    ctx.restore();
+
+    deleteActiveGeom();
 }
 
 // ---------------------------------

@@ -9,9 +9,9 @@
         <div id="toolbar">
             <!-- инструменты рисования -->
             <div class="toolBlock">
-                <div class="toolblock-title">Brushes (P)</div>
+                <div class="toolblock-title">Drawing tools (D)</div>
                 <div class="toolblock-buttons">
-                    <button id="pencil">
+                    <button id="pencil" title="Pencil tool">
                         <svg
                             class="fa-icon"
                             viewBox="0 0 640 640"
@@ -20,14 +20,19 @@
                             <use href="./icons.svg#fa-pencil" />
                         </svg>
                     </button>
-                    <button id="eraser">
+                    <button id="eraser" title="Eraser tool">
                         <svg class="fa-icon">
                             <use href="./icons.svg#fa-eraser" />
                         </svg>
                     </button>
-                    <button id="highlighter">
+                    <button id="highlighter" title="Highlighter tool">
                         <svg class="fa-icon">
                             <use href="./icons.svg#fa-highlighter" />
+                        </svg>
+                    </button>
+                    <button id="line" title="Line tool">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-line" />
                         </svg>
                     </button>
                 </div>
@@ -35,13 +40,8 @@
 
             <!-- инструменты геометрии -->
             <div class="toolBlock">
-                <div class="toolblock-title">Primitives (G)</div>
+                <div class="toolblock-title">Geometry shapes (G)</div>
                 <div class="toolblock-buttons">
-                    <button id="line">
-                        <svg class="fa-icon">
-                            <use href="./icons.svg#fa-line" />
-                        </svg>
-                    </button>
                     <button id="polyline">
                         <svg class="fa-icon">
                             <use href="./icons.svg#fa-polyline" />
@@ -77,61 +77,67 @@
 
             <!-- цвет рисования -->
             <div class="toolBlock">
-                <div class="toolblock-title">Line color (C)</div>
+                <div class="toolblock-title">Color (C)</div>
                 <div class="toolblock-buttons">
                     <button
                         class="colorBtn"
                         style="background: black"
-                        data-light="rgb(150,150,150)"
+                        data-light="rgb(170,170,170)"
                     ></button>
+
                     <button
                         class="colorBtn"
                         style="background: blue"
-                        data-light="rgb(150,180,255)"
+                        data-light="rgb(100,150,255)"
                     ></button>
+
                     <button
                         class="colorBtn"
                         style="background: red"
-                        data-light="rgb(255,180,180)"
+                        data-light="rgb(255,140,140)"
                     ></button>
+
                     <button
                         class="colorBtn"
                         style="background: green"
-                        data-light="rgb(180,255,180)"
+                        data-light="rgb(140,255,140)"
                     ></button>
+
                     <button
                         class="colorBtn"
                         style="background: orange"
-                        data-light="rgb(255,210,150)"
+                        data-light="rgb(255,190,110)"
                     ></button>
+
                     <button
                         class="colorBtn"
                         style="background: purple"
-                        data-light="rgb(210,180,255)"
+                        data-light="rgb(190,140,255)"
                     ></button>
-                    <button
+
+                    <!--<button
                         class="colorBtn"
                         style="background: gray"
-                        data-light="rgb(200,200,200)"
-                    ></button>
+                        data-light="rgb(170,170,170)"
+                    ></button>-->
                 </div>
             </div>
 
             <!-- толщины линий -->
             <div class="toolBlock">
-                <div class="toolblock-title">Line thickness (T)</div>
+                <div class="toolblock-title">Thickness (T)</div>
                 <div class="toolblock-buttons">
-                    <button class="thicknessBtn active" data-size="2">
+                    <button class="thicknessBtn active" data-size="1">
                         <svg class="fa-icon">
                             <use href="./icons.svg#fa-stroke-thin" />
                         </svg>
                     </button>
-                    <button class="thicknessBtn" data-size="5">
+                    <button id="midthick" class="thicknessBtn" data-size="2">
                         <svg class="fa-icon">
                             <use href="./icons.svg#fa-stroke-medium" />
                         </svg>
                     </button>
-                    <button class="thicknessBtn" data-size="10">
+                    <button class="thicknessBtn" data-size="5">
                         <svg class="fa-icon">
                             <use href="./icons.svg#fa-stroke-thick" />
                         </svg>
@@ -143,8 +149,64 @@
             <div class="toolBlock">
                 <div class="toolblock-title">Background (B)</div>
                 <div class="toolblock-buttons">
-                    <button id="grid" class="backgroundBtn" style="width: 80px">
-                        <span style="position: relative; top: -2px">▦</span>
+                    <button
+                        class="backgroundBtn active"
+                        data-type="nogrid"
+                        data-size="0"
+                    ></button>
+                    <button
+                        class="backgroundBtn"
+                        data-type="square"
+                        data-size="1"
+                    >
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-grid-square-small" />
+                        </svg>
+                    </button>
+                    <button
+                        class="backgroundBtn"
+                        data-type="square"
+                        data-size="2"
+                    >
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-grid-square-medium" />
+                        </svg>
+                    </button>
+                    <button
+                        class="backgroundBtn"
+                        data-type="square"
+                        data-size="3"
+                    >
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-grid-square-large" />
+                        </svg>
+                    </button>
+                    <button
+                        class="backgroundBtn"
+                        data-type="triangle"
+                        data-size="1"
+                    >
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-grid-triangle-small" />
+                        </svg>
+                    </button>
+                    <button
+                        class="backgroundBtn"
+                        data-type="triangle"
+                        data-size="2"
+                    >
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-grid-triangle-medium" />
+                        </svg>
+                    </button>
+                    <button
+                        class="backgroundBtn"
+                        data-type="triangle"
+                        data-size="3"
+                    >
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-grid-triangle-large" />
+                        </svg>
                     </button>
                 </div>
             </div>
@@ -233,17 +295,17 @@
         </div>
         <div id="cursorCircle"></div>
         <div id="canvasWrapper">
-            <canvas id="pointerCanvas" style="z-index: 5"></canvas>
-            <canvas id="editableCanvas" style="z-index: 4"></canvas>
+            <canvas id="pointerCanvas" style="z-index: 10"></canvas>
+            <canvas id="editableCanvas" style="z-index: 2"></canvas>
             <canvas
                 id="boardTopCanvas"
                 class="boardLayer"
-                style="z-index: 3"
+                style="z-index: 5"
             ></canvas>
             <canvas
                 id="boardMiddleCanvas"
                 class="boardLayer"
-                style="z-index: 2"
+                style="z-index: 3"
             ></canvas>
             <canvas
                 id="boardBottomCanvas"

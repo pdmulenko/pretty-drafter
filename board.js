@@ -5,6 +5,7 @@ import {
     imagePointerUp,
     insertImage,
     hasActiveImage,
+    deleteActiveImage,
     commitImage,
 } from "./image.js";
 import {
@@ -14,6 +15,7 @@ import {
     figuresPointerMove,
     figuresPointerUp,
     hasActiveGeom,
+    deleteActiveGeom,
     commitGeom,
 } from "./figures.js";
 
@@ -28,15 +30,13 @@ let drawing = false;
 let tool = "none";
 let color = "black";
 let layer = "botlayer";
-let lightColor = "rgba(0,0,0,0.15)";
+let lightColor = "rgb(170,170,170)";
 let lineWidth = 2;
 let lastPos = null;
 let smoothPos = null;
-let gridEnabled = false;
 
-const pens = ["pencil", "eraser", "highlighter"];
+const pens = ["pencil", "eraser", "highlighter", "line"];
 const geom = [
-    "line",
     "polyline",
     "triangle",
     "rect",
@@ -58,17 +58,38 @@ function getCanvasPos(e, canvas) {
     };
 }
 
+export function commitDrawing() {
+    if (tool === "highlighter") {
+        mainCtx.globalCompositeOperation = "multiply";
+        mainCtx.globalAlpha = 0.2; // желаемая прозрачность для маркера
+    }
+    mainCtx.setTransform(1, 0, 0, 1, 0, 0); // временно сбрасываем трансформацию
+    mainCtx.drawImage(tempCanvas, 0, 0);
+    const dpr = window.devicePixelRatio || 1;
+    mainCtx.setTransform(dpr, 0, 0, dpr, 0, 0); // возвращаем
+    tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+    if (tool === "highlighter") {
+        mainCtx.globalCompositeOperation = "source-over"; // возвращаем стандартное
+        mainCtx.globalAlpha = 1;
+    }
+}
+
 topCanvas.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0) return;
+
     if (imagePointerDown(e, mainCanvas)) return;
 
-    if (tool === "pencil" || tool === "eraser" || tool === "highlighter") {
+    if (pens.includes(tool) && tool !== "line") {
         drawing = true;
 
         lastPos = getCanvasPos(e, mainCanvas);
         smoothPos = getCanvasPos(e, mainCanvas);
 
-        const ctx = tool === "highlighter" ? tempCtx : mainCtx;
+        //const ctx = tool === "highlighter" ? tempCtx : mainCtx;
+        const ctx = tool === "eraser" ? mainCtx : tempCtx;
         applyToolSettings(ctx);
+
+        if (tool === "pencil" || tool === "highlighter") commitDrawing();
 
         ctx.beginPath();
         ctx.moveTo(lastPos.x, lastPos.y);
@@ -90,7 +111,8 @@ topCanvas.addEventListener("pointermove", (e) => {
 
     const currentPos = getCanvasPos(e, mainCanvas);
 
-    const ctx = tool === "highlighter" ? tempCtx : mainCtx;
+    //const ctx = tool === "highlighter" ? tempCtx : mainCtx;
+    const ctx = tool === "eraser" ? mainCtx : tempCtx;
     applyToolSettings(ctx);
 
     // лёгкое сглаживание
@@ -105,33 +127,45 @@ topCanvas.addEventListener("pointermove", (e) => {
     lastPos = { ...smoothPos };
 });
 
-topCanvas.addEventListener("pointerup", (e) => {
+function stopDrawing(e) {
     imagePointerUp(e, mainCanvas);
     figuresPointerUp(e, mainCanvas);
     drawing = false;
     lastPos = null;
     smoothPos = null;
 
-    const ctx = tool === "highlighter" ? tempCtx : mainCtx;
+    //const ctx = tool === "highlighter" ? tempCtx : mainCtx;
+    const ctx = tool === "eraser" ? mainCtx : tempCtx;
     ctx.beginPath(); // сброс пути
+}
+
+topCanvas.addEventListener("pointerup", (e) => {
+    stopDrawing(e);
+});
+topCanvas.addEventListener("pointercancel", (e) => {
+    stopDrawing(e);
+});
+topCanvas.addEventListener("pointerleave", (e) => {
+    stopDrawing(e);
 });
 
 // ---------------------------------
 // --- переключение инструментов ---
 // ---------------------------------
 
-function applyToolSettings(ctx) {
+function applyToolSettings(ctx, Tool = null) {
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.globalAlpha = 1;
+    if (Tool === null) Tool = tool;
 
-    if (tool === "eraser") {
+    if (Tool === "eraser") {
         ctx.globalCompositeOperation = "destination-out";
-        ctx.lineWidth = lineWidth * 10;
-    } else if (tool === "highlighter") {
+        ctx.lineWidth = lineWidth * 20;
+    } else if (Tool === "highlighter") {
         ctx.globalCompositeOperation = "source-over";
         ctx.strokeStyle = lightColor;
-        ctx.lineWidth = lineWidth * 3;
+        ctx.lineWidth = lineWidth * 14;
     } else {
         // pencil
         ctx.globalCompositeOperation = "source-over";
@@ -151,31 +185,19 @@ function updateCursor() {
         topCanvas.classList.remove("pencilCursor");
         topCanvas.classList.add("eraserCursor");
         if (tool === "eraser") {
-            cursorCircle.style.width = lineWidth * 10 + "px";
-            cursorCircle.style.height = lineWidth * 10 + "px";
+            cursorCircle.style.width = lineWidth * 20 + "px";
+            cursorCircle.style.height = lineWidth * 20 + "px";
         } else {
-            cursorCircle.style.width = lineWidth * 3 + "px";
-            cursorCircle.style.height = lineWidth * 3 + "px";
+            cursorCircle.style.width = lineWidth * 14 + "px";
+            cursorCircle.style.height = lineWidth * 14 + "px";
         }
     }
 }
 
 function setActiveTool(newTool) {
-    // сведение слоя после highlighter
-    if (tool === "highlighter") {
-        // накладываем временный слой на основной
-        mainCtx.globalCompositeOperation = "multiply";
-        mainCtx.globalAlpha = 0.2; // желаемая прозрачность для маркера
-        mainCtx.setTransform(1, 0, 0, 1, 0, 0); // временно сбрасываем трансформацию
-        mainCtx.drawImage(tempCanvas, 0, 0);
-        const dpr = window.devicePixelRatio || 1;
-        mainCtx.setTransform(dpr, 0, 0, dpr, 0, 0); // возвращаем
-        mainCtx.globalCompositeOperation = "source-over"; // возвращаем стандартное
-        mainCtx.globalAlpha = 1;
-        tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
-        tempCanvas.classList.remove("highlighter", "active");
-    }
-
+    // сведение слоя после highlighter и pencil
+    if (pens.includes(tool) && tool !== "eraser") commitDrawing();
+    if (tool === "highlighter") tempCanvas.classList.remove("highlighter"); //, "active");
     // убрать выделение старого инструмента
     document.querySelectorAll("#toolbar button").forEach((btn) => {
         if (btn.id === tool) btn.classList.remove("active");
@@ -183,38 +205,36 @@ function setActiveTool(newTool) {
 
     // сбрасываем настройки рисовательного слоя
     if (tool !== "none") {
-        const ctx = tool === "highlighter" ? tempCtx : mainCtx;
-        applyToolSettings(ctx);
+        const ctx = newTool === "highlighter" ? tempCtx : mainCtx;
+        applyToolSettings(ctx, newTool);
     }
 
-    tool = newTool;
-
     // если работали с картинкой
-    if (hasActiveImage() && tool !== "picture") commitImage();
+    if (hasActiveImage() && newTool !== "picture") commitImage();
+
+    tool = newTool;
+    document.getElementById("midthick").click();
 
     // если работали с примитивом
     if (hasActiveGeom()) commitGeom();
 
     // подсветка выбранного инструмента
-    if (tool === "pencil")
-        document.getElementById("pencil").classList.add("active");
-    if (tool === "eraser")
-        document.getElementById("eraser").classList.add("active");
-    if (tool === "highlighter") {
-        document.getElementById("highlighter").classList.add("active");
-
-        tempCanvas.classList.add("highlighter", "active");
-        tempCtx.globalCompositeOperation = "multiply";
-        tempCtx.strokeStyle = lightColor;
-        tempCtx.lineWidth = lineWidth * 3;
-        tempCtx.lineCap = "round";
-        tempCtx.lineJoin = "round";
+    if (pens.includes(tool)) {
+        document.getElementById(tool).classList.add("active");
+        if (tool === "highlighter") {
+            tempCanvas.classList.add("highlighter"); //, "active");
+            tempCtx.globalCompositeOperation = "multiply";
+            tempCtx.strokeStyle = lightColor;
+            tempCtx.lineWidth = lineWidth * 3;
+            tempCtx.lineCap = "round";
+            tempCtx.lineJoin = "round";
+        } else if (tool === "line") setFigureTool(tool);
     }
 
     geom.forEach((toolId) => {
         if (tool === toolId) {
             document.getElementById(toolId).classList.add("active");
-            tempCanvas.classList.remove("highlighter", "active");
+            //tempCanvas.classList.remove("highlighter"); //, "active");
             setFigureTool(toolId);
         }
     });
@@ -247,13 +267,22 @@ tools.forEach((toolId) => {
     }
 });
 
-document.getElementById("grid").onclick = () => {
-    gridEnabled = !gridEnabled;
-    document
-        .getElementById("canvasWrapper")
-        .classList.toggle("grid", gridEnabled);
-    document.getElementById("grid").classList.toggle("active", gridEnabled);
-};
+document.querySelectorAll(".backgroundBtn").forEach((btn) => {
+    btn.onclick = () => {
+        const cw = document.getElementById("canvasWrapper");
+        document
+            .querySelectorAll(".backgroundBtn")
+            .forEach((b) => b.classList.remove("active"));
+        if (btn.dataset.type === "nogrid") {
+            cw.className = "";
+            cw.style.cssText = "";
+        } else {
+            cw.className = `${btn.dataset.type}-grid`;
+            cw.style.cssText = `--cell: ${btn.dataset.size * 20}px;`;
+        }
+        btn.classList.add("active");
+    };
+});
 
 document.querySelectorAll(".colorBtn").forEach((btn) => {
     btn.onclick = () => {
@@ -286,6 +315,8 @@ document.querySelectorAll(".layerBtn").forEach((btn) => {
         mainCanvas = document.getElementById(btn.dataset.canvas);
         layer = btn.id;
         mainCtx = mainCanvas.getContext("2d");
+        // смена z-index временного слоя
+        tempCanvas.style.zIndex = parseInt(mainCanvas.style.zIndex) + 1;
         // подсветка активного слоя
         document
             .querySelectorAll(".layerBtn")
@@ -311,6 +342,9 @@ document.querySelectorAll(".clearBtn").forEach((btn) => {
     btn.onclick = () => {
         const curCanvas = document.getElementById(btn.dataset.canvas);
         const curCtx = curCanvas.getContext("2d");
+
+        if (tool === "highlighter") setActiveTool("highlighter");
+
         curCtx.clearRect(0, 0, curCanvas.width, curCanvas.height);
     };
 });
@@ -338,15 +372,12 @@ document.querySelectorAll(".visibilityBtn").forEach((btn) => {
 window.addEventListener("keydown", (e) => {
     if (e.repeat) return;
 
-    if (e.code === "KeyB") {
-        document.getElementById("grid").click();
-    } else if (e.code === "KeyC") {
+    if (e.code === "KeyC") {
         const buttons = [...document.querySelectorAll(".colorBtn")];
 
         const i = buttons.findIndex((btn) => btn.style.background === color);
 
-        const next = buttons[(i + 1) % buttons.length];
-        next.click();
+        buttons[(i + 1) % buttons.length].click();
     } else if (e.code === "KeyT") {
         const buttons = [...document.querySelectorAll(".thicknessBtn")];
 
@@ -355,7 +386,13 @@ window.addEventListener("keydown", (e) => {
         );
 
         buttons[(i + 1) % buttons.length].click();
-    } else if (e.code === "KeyP") {
+    } else if (e.code === "KeyB") {
+        const buttons = [...document.querySelectorAll(".backgroundBtn")];
+
+        const i = buttons.findIndex((btn) => btn.classList.contains("active"));
+
+        buttons[(i + 1) % buttons.length].click();
+    } else if (e.code === "KeyD") {
         const i = pens.indexOf(tool);
         const newTool = i !== -1 ? pens[(i + 1) % pens.length] : pens[0];
         setActiveTool(newTool);
@@ -363,10 +400,22 @@ window.addEventListener("keydown", (e) => {
         const i = geom.indexOf(tool);
         const newTool = i !== -1 ? geom[(i + 1) % geom.length] : geom[0];
         setActiveTool(newTool);
+    } else if (e.key === "Enter") {
+        // завершаем работу с геометрией/картинкой
+        if (!hasActiveGeom() && !hasActiveImage()) return;
+        if (hasActiveImage()) setActiveTool("pencil");
+        else setActiveTool(tool);
     } else if (e.key === "Escape") {
-        if (!geom.includes(tool)) return;
-        // ищем кнопку текущего инструмента и кликаем её
+        // отменяем работу с геометрией/картинкой
+        if (!hasActiveGeom() && !hasActiveImage()) return;
+        if (hasActiveImage()) tool = "pencil";
+        deleteActiveImage();
+        deleteActiveGeom();
         setActiveTool(tool);
+    } else if (e.key.toLowerCase() === "z" && (e.ctrlKey || e.metaKey)) {
+        // отменяем последний нарисованный элемент
+        if (pens.includes(tool) && tool !== "eraser")
+            tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
     }
 
     // слои
@@ -455,7 +504,7 @@ document.addEventListener("paste", (e) => {
 
     img.onload = () => {
         setActiveTool("picture");
-        tempCanvas.classList.add("active");
+        //tempCanvas.classList.add("active");
         insertImage(img);
     };
 
