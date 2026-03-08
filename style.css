@@ -93,7 +93,7 @@ body {
 .triangle-grid {
     --cell: 60px;
 
-    background-image: url("/hex.svg");
+    background-image: url("./hex.svg");
     background-repeat: repeat;
     background-size: calc(var(--cell) * 3);
     background-position: top left;

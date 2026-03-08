@@ -425,9 +425,15 @@ export function draw() {
 
     tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
     tempCtx.save();
-    tempCtx.lineWidth = 2;
-    tempCtx.strokeStyle = "#4aa3ff";
-    tempCtx.fillStyle = "#4aa3ff";
+    if (activeGeom.type === "line") {
+        const pencilProps = getPencilProperties();
+        tempCtx.strokeStyle = pencilProps.color;
+        tempCtx.lineWidth = pencilProps.lineWidth;
+    } else {
+        tempCtx.strokeStyle = "#4aa3ff";
+        tempCtx.fillStyle = "#4aa3ff";
+        tempCtx.lineWidth = 2;
+    }
 
     switch (activeGeom.type) {
         case "line":

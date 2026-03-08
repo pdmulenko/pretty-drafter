@@ -1,3 +1,11 @@
+## v1.1.1 — 2026-03-08
+
+### Fixed
+
+- Triangular grid was not visible
+- Line tool applied color and thickness settings only after the line was finished
+- Geometry shapes did not use the thickness setting
+
 ## v1.1 — 2026-03-08
 
 ### Main features

@@ -213,7 +213,6 @@ function setActiveTool(newTool) {
     if (hasActiveImage() && newTool !== "picture") commitImage();
 
     tool = newTool;
-    document.getElementById("midthick").click();
 
     // если работали с примитивом
     if (hasActiveGeom()) commitGeom();
@@ -239,11 +238,15 @@ function setActiveTool(newTool) {
         }
     });
 
+    // подсветка активного цвета
     document.querySelectorAll(".colorBtn").forEach((btn) => {
         if (btn.style.background === color && tool !== "eraser")
             btn.classList.add("active");
         else btn.classList.remove("active");
     });
+
+    // сброс толщины
+    document.getElementById("midthick").click();
 
     // подсветка активного слоя
     document.querySelectorAll(".layerBtn").forEach((btn) => {
