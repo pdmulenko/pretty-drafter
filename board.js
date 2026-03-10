@@ -59,18 +59,20 @@ function getCanvasPos(e, canvas) {
 }
 
 export function commitDrawing() {
-    if (tool === "highlighter") {
-        mainCtx.globalCompositeOperation = "multiply";
-        mainCtx.globalAlpha = 0.2; // желаемая прозрачность для маркера
-    }
-    mainCtx.setTransform(1, 0, 0, 1, 0, 0); // временно сбрасываем трансформацию
-    mainCtx.drawImage(tempCanvas, 0, 0);
-    const dpr = window.devicePixelRatio || 1;
-    mainCtx.setTransform(dpr, 0, 0, dpr, 0, 0); // возвращаем
-    tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
-    if (tool === "highlighter") {
-        mainCtx.globalCompositeOperation = "source-over"; // возвращаем стандартное
-        mainCtx.globalAlpha = 1;
+    if (mainCtx != null) {
+        if (tool === "highlighter") {
+            mainCtx.globalCompositeOperation = "multiply";
+            mainCtx.globalAlpha = 0.2; // желаемая прозрачность для маркера
+        }
+        mainCtx.setTransform(1, 0, 0, 1, 0, 0); // временно сбрасываем трансформацию
+        mainCtx.drawImage(tempCanvas, 0, 0);
+        const dpr = window.devicePixelRatio || 1;
+        mainCtx.setTransform(dpr, 0, 0, dpr, 0, 0); // возвращаем
+        tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+        if (tool === "highlighter") {
+            mainCtx.globalCompositeOperation = "source-over"; // возвращаем стандартное
+            mainCtx.globalAlpha = 1;
+        }
     }
 }
 
@@ -315,6 +317,7 @@ document.querySelectorAll(".thicknessBtn").forEach((btn) => {
 
 document.querySelectorAll(".layerBtn").forEach((btn) => {
     btn.onclick = () => {
+        if (pens.includes(tool) && tool !== "eraser") commitDrawing();
         mainCanvas = document.getElementById(btn.dataset.canvas);
         layer = btn.id;
         mainCtx = mainCanvas.getContext("2d");
@@ -325,6 +328,8 @@ document.querySelectorAll(".layerBtn").forEach((btn) => {
             .querySelectorAll(".layerBtn")
             .forEach((b) => b.classList.remove("active"));
         btn.classList.add("active");
+        // проверка видимости для editableCanvas
+        tempCanvas.style.visibility = mainCanvas.style.visibility;
         // передача для картинок и примитивов
         initFiguresTool({
             pointerCanvasEl: topCanvas,
@@ -346,7 +351,7 @@ document.querySelectorAll(".clearBtn").forEach((btn) => {
         const curCanvas = document.getElementById(btn.dataset.canvas);
         const curCtx = curCanvas.getContext("2d");
 
-        if (tool === "highlighter") setActiveTool("highlighter");
+        if (pens.includes(tool) && tool !== "eraser") commitDrawing();
 
         curCtx.clearRect(0, 0, curCanvas.width, curCanvas.height);
     };
@@ -354,16 +359,27 @@ document.querySelectorAll(".clearBtn").forEach((btn) => {
 
 document.querySelectorAll(".visibilityBtn").forEach((btn) => {
     btn.onclick = () => {
+        if (pens.includes(tool) && tool !== "eraser") commitDrawing();
         const curCanvas = document.getElementById(btn.dataset.canvas);
         const useEl = btn.querySelector("use");
         if (btn.classList.contains("active")) {
             curCanvas.style.visibility = "visible";
             useEl.setAttribute("href", "./icons.svg#fa-visible");
             btn.classList.remove("active");
+            const activeCanvas = document.getElementById(layer);
+            if (activeCanvas.dataset.canvas === btn.dataset.canvas) {
+                // текущий слой стал видимым -> показать editableCanvas
+                tempCanvas.style.visibility = "visible";
+            }
         } else {
             curCanvas.style.visibility = "hidden";
             useEl.setAttribute("href", "./icons.svg#fa-invisible");
             btn.classList.add("active");
+            const activeCanvas = document.getElementById(layer);
+            if (activeCanvas.dataset.canvas === btn.dataset.canvas) {
+                // текущий слой стал невидимым -> спрятать editableCanvas
+                tempCanvas.style.visibility = "hidden";
+            }
         }
     };
 });

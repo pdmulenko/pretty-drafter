@@ -1,3 +1,10 @@
+## v1.1.2 — 2026-03-10
+
+### Fixed
+
+- When using undoable drawing tools, switching, clearing, or hiding the active layer did not affect the last drawn element
+- Objects being drawn were still visible when drawing on a hidden layer
+
 ## v1.1.1 — 2026-03-08
 
 ### Fixed
