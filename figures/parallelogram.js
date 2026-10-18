@@ -47,15 +47,15 @@ export function getParallelogramHandles(g) {
     const h2 = h / 2;
 
     const local = [
-        { x: -w / 2 + skew, y: -h2 }, // 0 LT
-        { x: w / 2 + skew, y: -h2 }, // 1 RT (верхний правый)
-        { x: w / 2 - skew, y: h2 }, // 2 RB
-        { x: -w / 2 - skew, y: h2 }, // 3 LB
+        { x: -w / 2 + skew, y: -h2, handle: 0 }, // LT
+        // RT (1) не рисуется и не активен
+        { x: w / 2 - skew, y: h2, handle: 2 }, // RB
+        { x: -w / 2 - skew, y: h2, handle: 3 }, // LB
     ];
 
-    const handles = local.map((p, i) => {
+    const handles = local.map((p) => {
         const wp = toWorldPoint(g, p);
-        return { type: "resize", handle: i, x: wp.x, y: wp.y };
+        return { type: "resize", handle: p.handle, x: wp.x, y: wp.y };
     });
 
     const rLocal = { x: 0, y: -h2 - ROTATE_HANDLE_OFFSET };

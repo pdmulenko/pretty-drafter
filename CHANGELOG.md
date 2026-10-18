@@ -1,3 +1,29 @@
+## Unreleased
+
+### Main features
+
+- **Editing tools** group (`E`): eraser (moved here from drawing tools), hand (moves the whole board; content pushed past the edge is dropped) and area selection (cut a fragment of the active layer, then move, resize or rotate it)
+- **Text tool** in drawing tools: thickness buttons switch light / regular / bold; while typing, the text frame can be moved, resized and rotated
+- **Solids** group (`S`): cube / cuboid, triangular and hexagonal prisms, triangular, quadrilateral and hexagonal pyramids, with hidden edges dashed
+- **Graphs** group (`F`): parabola, hyperbola, sine wave
+- White color, which works as a temporary eraser
+- `?` button and shortcut: about the app and the list of keyboard shortcuts
+- Toolbar blocks wrap onto new lines on narrow screens
+- Favicon
+
+### Settings adjustments
+
+- `Esc` is no longer used (in macOS full screen it exits full screen): `X` cancels the current shape or image, `Delete` removes a selection or image
+- `Shift` draws an equilateral triangle, and a square frame for solids and graphs
+- Thickness is no longer reset when switching tools right after choosing it, or when finishing a shape with `Enter`
+
+### Fixed
+
+- Resize handles of shapes and images behaved incorrectly after rotation
+- Resize cursors did not follow the rotation of a shape
+- The hidden top-right handle of a parallelogram could be grabbed
+- Pasting an image into a page opened in a background tab could throw an error
+
 ## v1.1.2 — 2026-03-10
 
 ### Fixed

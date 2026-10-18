@@ -121,6 +121,20 @@ export function triangleRotate(g, pos) {
 // draw
 // ---------------------------------
 
+// Shift: равносторонний треугольник (высота = основание · √3/2)
+export function applyEquilateralConstraint(start, pos) {
+    const dx = pos.x - start.x;
+    const dy = pos.y - start.y;
+    const k = Math.sqrt(3) / 2;
+
+    const w = Math.max(Math.abs(dx), Math.abs(dy) / k);
+
+    return {
+        x: start.x + Math.sign(dx || 1) * w,
+        y: start.y + Math.sign(dy || 1) * w * k,
+    };
+}
+
 export function drawTriangleCreate(ctx, start, end) {
     const x = Math.min(start.x, end.x);
     const y = Math.min(start.y, end.y);

@@ -4,6 +4,8 @@ import {
     toWorldPoint,
     toLocalPoint,
     getRotateHandle,
+    localDelta,
+    pinAnchor,
     dist,
 } from "./utils.js";
 
@@ -82,76 +84,48 @@ export function hitTestCircleHandles(g, pos) {
 export function circleResize(g, pos) {
     if (g.handle == null) return;
 
-    if (!g.start || !g.start.localPos) {
-        g.start = {
-            params: structuredClone(g.params),
-            localPos: toLocalPoint(g, pos),
-        };
+    const minR = 10;
+
+    // якорь (противоположная точка) фиксируем в WORLD один раз за жест
+    if (!g.start.anchor) {
+        const { rx, ry } = g.params;
+        const anchorLocal = [
+            { x: rx, y: ry }, // для NW — правый нижний угол габарита
+            { x: 0, y: -ry }, // для S — верхняя точка
+            { x: -rx, y: 0 }, // для E — левая точка
+        ][g.handle];
+        g.start.anchor = toWorldPoint(g, anchorLocal);
+        g.start.params = structuredClone(g.params);
     }
 
     const { rx, ry } = g.start.params;
-    const local = toLocalPoint(g, pos);
-    const minR = 10;
+    // курсор относительно неподвижного якоря, а не «плывущего» центра
+    const d = localDelta(g, g.start.anchor, pos);
 
     switch (g.handle) {
         case 0: {
-            // NW — пропорциональный
-            if (!g.start.anchor) {
-                g.start.anchor = toWorldPoint(g, { x: rx, y: ry });
-            }
-
-            const dx0 = g.start.localPos.x;
-            const dy0 = g.start.localPos.y;
-            const dx = local.x;
-            const dy = local.y;
-
-            const startDist = Math.hypot(dx0, dy0);
-            const currDist = Math.hypot(dx, dy);
-
-            const r = Math.max(minR, rx + (currDist - startDist) / 2);
-
-            g.params.rx = r;
-            g.params.ry = r;
-
-            const newAnchorWorld = toWorldPoint(g, { x: r, y: r });
-            g.cx += g.start.anchor.x - newAnchorWorld.x;
-            g.cy += g.start.anchor.y - newAnchorWorld.y;
+            // NW — пропорциональный: проекция на диагональ габарита
+            const k =
+                (-d.x * 2 * rx + -d.y * 2 * ry) /
+                (4 * rx * rx + 4 * ry * ry);
+            const s = Math.max(minR / Math.min(rx, ry), k);
+            g.params.rx = rx * s;
+            g.params.ry = ry * s;
+            pinAnchor(g, g.start.anchor, { x: g.params.rx, y: g.params.ry });
             break;
         }
 
         case 1: {
             // S — вертикальный
-            if (!g.start.anchor) {
-                g.start.anchor = toWorldPoint(g, { x: 0, y: -ry });
-            }
-
-            const dy0 = g.start.localPos.y;
-            const dy = local.y;
-
-            const newRy = Math.max(minR, ry + (dy - dy0) / 2);
-            g.params.ry = newRy;
-
-            const newAnchorWorld = toWorldPoint(g, { x: 0, y: -newRy });
-            g.cx += g.start.anchor.x - newAnchorWorld.x;
-            g.cy += g.start.anchor.y - newAnchorWorld.y;
+            g.params.ry = Math.max(minR, d.y / 2);
+            pinAnchor(g, g.start.anchor, { x: 0, y: -g.params.ry });
             break;
         }
 
         case 2: {
             // E — горизонтальный
-            if (!g.start.anchor) {
-                g.start.anchor = toWorldPoint(g, { x: -rx, y: 0 });
-            }
-
-            const dx0 = g.start.localPos.x;
-            const dx = local.x;
-
-            const newRx = Math.max(minR, rx + (dx - dx0) / 2);
-            g.params.rx = newRx;
-
-            const newAnchorWorld = toWorldPoint(g, { x: -newRx, y: 0 });
-            g.cx += g.start.anchor.x - newAnchorWorld.x;
-            g.cy += g.start.anchor.y - newAnchorWorld.y;
+            g.params.rx = Math.max(minR, d.x / 2);
+            pinAnchor(g, g.start.anchor, { x: -g.params.rx, y: 0 });
             break;
         }
     }

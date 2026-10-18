@@ -86,11 +86,14 @@ export function rectResize(g, pos) {
     const lx = dx * cos - dy * sin;
     const ly = dx * sin + dy * cos;
 
+    // минимальный размер с сохранением направления от якоря
+    const sx = Math.sign(lx) || 1;
+    const sy = Math.sign(ly) || 1;
     g.w = Math.max(20, Math.abs(lx));
     g.h = Math.max(20, Math.abs(ly));
 
-    const cxLocal = lx / 2;
-    const cyLocal = ly / 2;
+    const cxLocal = (sx * g.w) / 2;
+    const cyLocal = (sy * g.h) / 2;
 
     g.cx =
         g.anchor.x + cxLocal * Math.cos(g.angle) - cyLocal * Math.sin(g.angle);

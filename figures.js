@@ -7,6 +7,7 @@ import * as Triangle from "./figures/triangle.js";
 import * as Trapezoid from "./figures/trapezoid.js";
 import * as Parallelogram from "./figures/parallelogram.js";
 import * as Circle from "./figures/circle.js";
+import * as Boxed from "./figures/boxed.js";
 
 // ---------------------------------
 // --- utils / константы ---
@@ -20,6 +21,7 @@ import {
     pointInPolygon,
     getLocalBounds,
     getRotateHandle,
+    resizeCursorByDirection,
 } from "./figures/utils.js";
 
 // ---------------------------------
@@ -27,6 +29,12 @@ import {
 let tempCanvas, pointerCanvas, tempCtx, mainCtx;
 let tool = null;
 let activeGeom = null;
+
+// тела и графики ведут себя как прямоугольник (рамка + поворот),
+// отличается только отрисовка
+function kind(type) {
+    return Boxed.isBoxed(type) ? "rect" : type;
+}
 
 // ---------------------------------
 // --------- инициализация ---------
@@ -102,6 +110,10 @@ export function figuresPointerDown(e, canvas) {
                 };
                 return true;
         }
+        if (Boxed.isBoxed(tool)) {
+            activeGeom = { type: tool, mode: "create", start: pos, end: pos };
+            return true;
+        }
         return false;
     }
 
@@ -115,9 +127,11 @@ export function figuresPointerDown(e, canvas) {
 
             // данные для resize / rotate
             switch (activeGeom.editMode) {
-                case "resize":
-                    activeGeom.start = structuredClone(activeGeom);
-                    if (activeGeom.type === "rect") {
+                case "resize": {
+                    // снимок фигуры без служебных полей прошлых жестов
+                    const { start, anchor, ...snapshot } = activeGeom;
+                    activeGeom.start = structuredClone(snapshot);
+                    if (kind(activeGeom.type) === "rect") {
                         activeGeom.anchor = Rect.getOppositeCorner(
                             activeGeom,
                             hit.handle,
@@ -127,6 +141,7 @@ export function figuresPointerDown(e, canvas) {
                         activeGeom.handle = hit.handle; // индекс вершины
                     }
                     break;
+                }
                 case "rotate":
                     activeGeom.start = {
                         angle: activeGeom.angle,
@@ -185,7 +200,7 @@ export function figuresPointerMove(e, canvas) {
     if (!activeGeom) return false;
     const pos = getPos(e, canvas);
 
-    switch (activeGeom.type) {
+    switch (kind(activeGeom.type)) {
         case "line":
             if (tool === "line" && e.shiftKey) {
                 activeGeom.end = snapLineToAngle(activeGeom.start, pos);
@@ -202,8 +217,14 @@ export function figuresPointerMove(e, canvas) {
         case "parallelogram":
         case "circle":
             if (activeGeom.mode === "create") {
-                if (activeGeom.type === "rect" && e.shiftKey) {
+                // Shift: квадратная рамка (куб, «ровные» графики)
+                if (kind(activeGeom.type) === "rect" && e.shiftKey) {
                     activeGeom.end = Rect.applySquareConstraint(
+                        activeGeom.start,
+                        pos,
+                    );
+                } else if (activeGeom.type === "triangle" && e.shiftKey) {
+                    activeGeom.end = Triangle.applyEquilateralConstraint(
                         activeGeom.start,
                         pos,
                     );
@@ -249,7 +270,7 @@ export function figuresPointerUp(e) {
         return;
     }
 
-    switch (activeGeom.type) {
+    switch (kind(activeGeom.type)) {
         case "line":
             //case "polyline":
             commitGeom();
@@ -295,19 +316,16 @@ function setCursorForGeom(g, pos, canvas) {
             return;
         }
 
-        if (hit.type === "resize") hit = getHitTest(g, pos);
-        const resizeDir = hit.type === "resize" ? hit.cursor : hit.type;
-
-        const map = {
-            nw: "nwse-resize",
-            se: "nwse-resize",
-            ne: "nesw-resize",
-            sw: "nesw-resize",
-            ns: "row-resize",
-            ew: "col-resize",
-        };
-
-        const cursorValue = map[resizeDir] || "pointer";
+        // у треугольника и верхних вершин параллелограмма/трапеции — свободное перемещение
+        const test = hit.type === "resize" ? getHitTest(g, pos) : hit;
+        // ns/ew — вдоль локальных осей, иначе по направлению центр → хэндл
+        let dir = hit;
+        if (test?.cursor === "ns") dir = toWorldPoint(g, { x: 0, y: 1 });
+        else if (test?.cursor === "ew") dir = toWorldPoint(g, { x: 1, y: 0 });
+        const cursorValue =
+            test?.cursor === "pointer" || g.type === "triangle"
+                ? "pointer"
+                : resizeCursorByDirection({ x: g.cx, y: g.cy }, dir);
 
         canvas.style.cursor = cursorValue; // стандарт
         canvas.style.setProperty("cursor", `-webkit-${cursorValue}`);
@@ -325,7 +343,7 @@ function setCursorForGeom(g, pos, canvas) {
 }
 
 function getHandles(g) {
-    switch (g.type) {
+    switch (kind(g.type)) {
         case "rect":
             return Rect.getRectHandles(g).concat([
                 { type: "rotate", ...getRotateHandle(g) },
@@ -344,7 +362,7 @@ function getHandles(g) {
 }
 
 function pointInGeom(g, pos) {
-    switch (g.type) {
+    switch (kind(g.type)) {
         case "rect":
             return Rect.pointInRect(g, pos);
         case "triangle":
@@ -361,7 +379,7 @@ function pointInGeom(g, pos) {
 }
 
 function resizeGeom(g, pos) {
-    switch (g.type) {
+    switch (kind(g.type)) {
         case "rect":
             Rect.rectResize(g, pos);
             break;
@@ -381,7 +399,7 @@ function resizeGeom(g, pos) {
 }
 
 function rotateGeom(g, pos) {
-    switch (g.type) {
+    switch (kind(g.type)) {
         case "rect":
             Rect.rectRotate(g, pos);
             break;
@@ -401,7 +419,7 @@ function rotateGeom(g, pos) {
 }
 
 function getHitTest(g, pos) {
-    switch (g.type) {
+    switch (kind(g.type)) {
         case "rect":
             return Rect.hitTestRectHandles(g, pos);
         case "triangle":
@@ -499,6 +517,19 @@ export function draw() {
                 Circle.drawCircleEdit(tempCtx, activeGeom);
             }
             break;
+
+        default:
+            if (!Boxed.isBoxed(activeGeom.type)) break;
+            if (activeGeom.mode === "create") {
+                Boxed.drawBoxedCreate(
+                    tempCtx,
+                    activeGeom.type,
+                    activeGeom.start,
+                    activeGeom.end,
+                );
+            } else {
+                Boxed.drawBoxedEdit(tempCtx, activeGeom);
+            }
     }
 
     tempCtx.restore();
@@ -607,6 +638,9 @@ export function commitGeom() {
         case "circle":
             Circle.drawCircleEdit(ctx, activeGeom, true);
             break;
+        default:
+            if (Boxed.isBoxed(activeGeom.type))
+                Boxed.drawBoxedEdit(ctx, activeGeom, true);
     }
 
     ctx.restore();

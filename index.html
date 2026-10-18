@@ -3,6 +3,9 @@
     <head>
         <meta charset="UTF-8" />
         <title>Pretty Drafter</title>
+        <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
         <link rel="stylesheet" href="style.css" />
     </head>
     <body>
@@ -20,11 +23,6 @@
                             <use href="./icons.svg#fa-pencil" />
                         </svg>
                     </button>
-                    <button id="eraser" title="Eraser tool">
-                        <svg class="fa-icon">
-                            <use href="./icons.svg#fa-eraser" />
-                        </svg>
-                    </button>
                     <button id="highlighter" title="Highlighter tool">
                         <svg class="fa-icon">
                             <use href="./icons.svg#fa-highlighter" />
@@ -33,6 +31,33 @@
                     <button id="line" title="Line tool">
                         <svg class="fa-icon">
                             <use href="./icons.svg#fa-line" />
+                        </svg>
+                    </button>
+                    <button id="text" title="Text tool">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-text" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- инструменты редактирования -->
+            <div class="toolBlock">
+                <div class="toolblock-title">Editing (E)</div>
+                <div class="toolblock-buttons">
+                    <button id="eraser" title="Eraser tool">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-eraser" />
+                        </svg>
+                    </button>
+                    <button id="hand" title="Hand: move the whole board">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-hand" />
+                        </svg>
+                    </button>
+                    <button id="select" title="Select an area to move">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-select" />
                         </svg>
                     </button>
                 </div>
@@ -70,6 +95,65 @@
                     <button id="circle">
                         <svg class="fa-icon">
                             <use href="./icons.svg#fa-circle" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- тела -->
+            <div class="toolBlock">
+                <div class="toolblock-title">Solids (S)</div>
+                <div class="toolblock-buttons">
+                    <button id="cube" title="Cube / cuboid (Shift: cube)">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-cube" />
+                        </svg>
+                    </button>
+                    <button id="prism3" title="Triangular prism">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-prism3" />
+                        </svg>
+                    </button>
+                    <button id="prism6" title="Hexagonal prism">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-prism6" />
+                        </svg>
+                    </button>
+                    <button id="pyramid3" title="Triangular pyramid">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-pyramid3" />
+                        </svg>
+                    </button>
+                    <button id="pyramid4" title="Quadrilateral pyramid">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-pyramid4" />
+                        </svg>
+                    </button>
+                    <button id="pyramid6" title="Hexagonal pyramid">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-pyramid6" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- графики функций -->
+            <div class="toolBlock">
+                <div class="toolblock-title">Graphs (F)</div>
+                <div class="toolblock-buttons">
+                    <button id="parabola" title="Parabola y = x²">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-parabola" />
+                        </svg>
+                    </button>
+                    <button id="hyperbola" title="Hyperbola y = 1/x">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-hyperbola" />
+                        </svg>
+                    </button>
+                    <button id="sine" title="Sine wave y = sin x">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-sine" />
                         </svg>
                     </button>
                 </div>
@@ -113,6 +197,14 @@
                         class="colorBtn"
                         style="background: purple"
                         data-light="rgb(190,140,255)"
+                    ></button>
+
+                    <!-- белый — «временный ластик» поверх содержимого -->
+                    <button
+                        class="colorBtn whiteColorBtn"
+                        style="background: white"
+                        data-light="white"
+                        title="White (temporary eraser)"
                     ></button>
 
                     <!--<button
@@ -292,7 +384,69 @@
                     </button>
                 </div>
             </div>
+
+            <!-- о программе и горячие клавиши -->
+            <div class="toolBlock helpBlock">
+                <div class="toolblock-title">Help</div>
+                <div class="toolblock-buttons">
+                    <button id="helpBtn" title="About and keyboard shortcuts">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-help" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
         </div>
+        <dialog id="helpDialog">
+            <button class="closeHelp" title="Close">&times;</button>
+            <h2>
+                <img class="helpLogo" src="icons/apple-touch-icon.png" alt="" />
+                Pretty Drafter
+            </h2>
+            <div>
+                A browser-based whiteboard for teaching, studying and
+                explaining ideas — built for pen input and geometry.
+            </div>
+            <div>
+                <a href="https://github.com/pdmulenko/pretty-drafter" target="_blank">GitHub</a>
+                · MIT License
+            </div>
+
+            <h3>Tools</h3>
+            <table>
+                <tr><td><kbd>D</kbd></td><td>Cycle drawing tools (pencil, highlighter, line, text)</td></tr>
+                <tr><td><kbd>E</kbd></td><td>Cycle editing tools (eraser, hand, selection)</td></tr>
+                <tr><td><kbd>G</kbd></td><td>Cycle geometry shapes</td></tr>
+                <tr><td><kbd>S</kbd></td><td>Cycle solids (cube, prisms, pyramids)</td></tr>
+                <tr><td><kbd>F</kbd></td><td>Cycle function graphs (parabola, hyperbola, sine)</td></tr>
+                <tr><td><kbd>C</kbd></td><td>Cycle colors</td></tr>
+                <tr><td><kbd>T</kbd></td><td>Cycle thickness (for text: light / regular / bold)</td></tr>
+                <tr><td><kbd>B</kbd></td><td>Cycle backgrounds</td></tr>
+            </table>
+
+            <h3>Editing</h3>
+            <table>
+                <tr><td><kbd>Enter</kbd></td><td>Finish the current shape, image, selection or text</td></tr>
+                <tr><td><kbd>X</kbd></td><td>Cancel the current shape or image; put a selection back where it was</td></tr>
+                <tr><td><kbd>Delete</kbd></td><td>Delete the current selection or image</td></tr>
+                <tr><td><kbd>Shift</kbd></td><td>Hold for angle snapping (line), a square (rectangle), an equilateral triangle, or a square frame for solids and graphs (a true cube)</td></tr>
+                <tr><td><kbd>Ctrl</kbd> + <kbd>Z</kbd></td><td>Undo the last drawing (except for eraser)</td></tr>
+                <tr><td><kbd>Ctrl</kbd> + <kbd>V</kbd></td><td>Insert an image from the clipboard</td></tr>
+                <tr><td><kbd>Shift</kbd> + <kbd>Enter</kbd></td><td>New line while typing text</td></tr>
+            </table>
+
+            <h3>Layers</h3>
+            <table>
+                <tr><td><kbd>1</kbd>–<kbd>3</kbd></td><td>Switch to a layer</td></tr>
+                <tr><td><kbd>Shift</kbd> + <kbd>1</kbd>–<kbd>3</kbd></td><td>Toggle layer visibility</td></tr>
+                <tr><td><kbd>Ctrl</kbd> + <kbd>1</kbd>–<kbd>3</kbd></td><td>Clear a layer</td></tr>
+            </table>
+
+            <h3>Help</h3>
+            <table>
+                <tr><td><kbd>?</kbd></td><td>Show or hide this window</td></tr>
+            </table>
+        </dialog>
         <div id="cursorCircle"></div>
         <div id="canvasWrapper">
             <canvas id="pointerCanvas" style="z-index: 10"></canvas>

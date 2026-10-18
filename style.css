@@ -13,17 +13,20 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    height: var(--toolbar-h);
+    /* высота --toolbar-h выставляется из JS: блоки переносятся на новую строку */
+    min-height: 55px;
+    box-sizing: border-box;
     background: #ddd;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    padding: 0 10px;
+    column-gap: 20px;
+    row-gap: 6px;
+    padding: 4px 10px;
     z-index: 1000;
 }
 
 #toolbar .toolBlock {
-    display: flex;
-    margin-right: 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -122,6 +125,127 @@ canvas.eraserCursor {
     height: 20px;
     transform: translate(-50%, -50%);
     z-index: 20;
+}
+
+/* рамка текстового инструмента (перетаскивается за рамку) */
+.textBox {
+    position: absolute;
+    z-index: 30;
+    padding: 4px; /* = PAD в text.js */
+    border: 1px dashed #4aa3ff; /* = BORDER в text.js */
+    transform-origin: center center;
+    cursor: move;
+}
+
+.textEditor {
+    display: block;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    outline: none;
+    resize: none;
+    overflow: hidden;
+    white-space: pre;
+    cursor: text;
+}
+
+/* хэндлы как у фигур: синий — размер, жёлтый — поворот */
+.textHandle {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #4aa3ff;
+}
+
+.textResize {
+    right: -11px;
+    bottom: -11px;
+    cursor: nwse-resize;
+}
+
+.textRotate {
+    left: calc(50% - 10px);
+    top: -39px;
+    background: gold;
+    cursor: grab;
+}
+
+/* блок «?» прижат к правому краю */
+#toolbar .helpBlock {
+    margin-left: auto;
+}
+
+#helpDialog {
+    max-width: 520px;
+    border: none;
+    border-radius: 10px;
+    padding: 20px 24px;
+    font: 14px/1.45 -apple-system, "Helvetica Neue", Arial, sans-serif;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+}
+
+#helpDialog::backdrop {
+    background: rgba(0, 0, 0, 0.25);
+}
+
+#helpDialog h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 8px;
+    font-size: 20px;
+}
+
+#helpDialog .helpLogo {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+}
+
+#helpDialog h3 {
+    margin: 16px 0 6px;
+    font-size: 15px;
+}
+
+#helpDialog table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+#helpDialog td {
+    padding: 3px 0;
+    vertical-align: top;
+}
+
+/* одна ширина колонки клавиш во всех разделах */
+#helpDialog td:first-child {
+    width: 150px;
+    white-space: nowrap;
+    padding-right: 16px;
+}
+
+#helpDialog kbd {
+    display: inline-block;
+    min-width: 1.4em;
+    padding: 0 5px;
+    border: 1px solid #ccc;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    background: #f6f6f6;
+    font: 12px/1.6 ui-monospace, Menlo, monospace;
+    text-align: center;
+}
+
+#helpDialog .closeHelp {
+    float: right;
+    border: none;
+    background: none;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.6;
 }
 
 #editableCanvas {

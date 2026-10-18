@@ -22,6 +22,39 @@ export function toWorldPoint(g, p) {
     };
 }
 
+// вектор якорь → курсор в локальных осях фигуры (не зависит от текущего центра)
+export function localDelta(g, anchor, pos) {
+    const sin = Math.sin(-g.angle);
+    const cos = Math.cos(-g.angle);
+
+    const dx = pos.x - anchor.x;
+    const dy = pos.y - anchor.y;
+
+    return { x: dx * cos - dy * sin, y: dx * sin + dy * cos };
+}
+
+// сдвигаем центр так, чтобы локальная точка anchorLocal оказалась в anchorWorld
+export function pinAnchor(g, anchorWorld, anchorLocal) {
+    const sin = Math.sin(g.angle);
+    const cos = Math.cos(g.angle);
+
+    g.cx = anchorWorld.x - (anchorLocal.x * cos - anchorLocal.y * sin);
+    g.cy = anchorWorld.y - (anchorLocal.x * sin + anchorLocal.y * cos);
+}
+
+// курсор ресайза по направлению центр → хэндл (учитывает поворот)
+export function resizeCursorByDirection(center, handle) {
+    const deg =
+        ((Math.atan2(handle.y - center.y, handle.x - center.x) * 180) /
+            Math.PI +
+            360) %
+        180;
+    if (deg < 22.5 || deg >= 157.5) return "ew-resize";
+    if (deg < 67.5) return "nwse-resize";
+    if (deg < 112.5) return "ns-resize";
+    return "nesw-resize";
+}
+
 export function dist(a, b) {
     return Math.hypot(a.x - b.x, a.y - b.y);
 }

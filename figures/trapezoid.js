@@ -5,6 +5,8 @@ import {
     toLocalPoint,
     getRotateHandle,
     pointInPolygon,
+    localDelta,
+    pinAnchor,
     dist,
 } from "./utils.js";
 
@@ -101,13 +103,17 @@ export function trapezoidResize(g, pos) {
 
     switch (g.handle) {
         case 0: {
-            const oldTopWorldY = g.start.cy - height / 2;
+            // якорь = середина верхнего основания (WORLD), с учётом поворота
+            if (!g.start.anchor) {
+                g.start.anchor = toWorldPoint(g, { x: 0, y: -height / 2 });
+            }
 
-            const newHeight = Math.max(minH, local.y + height / 2);
+            const d = localDelta(g, g.start.anchor, pos);
+            const newHeight = Math.max(minH, d.y);
             g.params.height = newHeight;
 
             // сдвигаем центр, чтобы верх остался на месте
-            g.cy = oldTopWorldY + newHeight / 2;
+            pinAnchor(g, g.start.anchor, { x: 0, y: -newHeight / 2 });
             break;
         }
         case 1: {

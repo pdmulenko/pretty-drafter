@@ -55,6 +55,52 @@ export function insertImage(img) {
     draw();
 }
 
+// вставка в заданный прямоугольник (выделение); onCancel — что делать по X
+export function insertImageAt(img, { x, y, width, height }, onCancel = null) {
+    activeImage = {
+        img,
+        x,
+        y,
+        width,
+        height,
+        rotation: 0,
+        mode: null,
+        aspect: width / height,
+        startState: null,
+        onCancel,
+    };
+
+    draw();
+}
+
+// X: для выделения возвращаем содержимое на место, для вставки — просто убираем
+export function cancelActiveImage() {
+    if (!activeImage) return;
+    const onCancel = activeImage.onCancel;
+    deleteActiveImage();
+    onCancel?.();
+}
+
+// попадает ли курсор в картинку или её хэндлы
+export function imageHitTest(e, canvas) {
+    if (!activeImage) return false;
+    const pos = getCanvasPos(e, canvas);
+    const p = toLocalPoint(pos.x, pos.y);
+    const pad = HANDLE + HANDLE_OFFSET;
+    return (
+        Math.hypot(p.x - activeImage.width / 2, p.y + ROTATE_OFFSET) <
+            HANDLE ||
+        pointInRect(
+            p.x,
+            p.y,
+            -pad,
+            -pad,
+            activeImage.width + pad * 2,
+            activeImage.height + pad * 2,
+        )
+    );
+}
+
 // ---------------------------------
 // ------------ курсор -------------
 // ---------------------------------
@@ -133,12 +179,14 @@ export function imagePointerDown(e, canvas) {
     const pos = getCanvasPos(e, canvas);
     const p = toLocalPoint(pos.x, pos.y);
 
-    const startState = {
-        local: p,
+    // неподвижная точка (противоположная хэндлу) в WORLD — считается при выборе режима
+    const makeStartState = (mode) => ({
         width: activeImage.width,
         height: activeImage.height,
-        aspect: activeImage.aspect,
-    };
+        anchorWorld: toWorldPoint(
+            anchorLocal(mode, activeImage.width, activeImage.height),
+        ),
+    });
 
     // rotate
     if (Math.hypot(p.x - activeImage.width / 2, p.y + ROTATE_OFFSET) < HANDLE) {
@@ -161,7 +209,7 @@ export function imagePointerDown(e, canvas) {
         )
     ) {
         activeImage.mode = "resize-prop";
-        activeImage.startState = startState;
+        activeImage.startState = makeStartState(activeImage.mode);
         return true;
     }
 
@@ -177,7 +225,7 @@ export function imagePointerDown(e, canvas) {
         )
     ) {
         activeImage.mode = "resize-hor";
-        activeImage.startState = startState;
+        activeImage.startState = makeStartState(activeImage.mode);
         return true;
     }
 
@@ -193,7 +241,7 @@ export function imagePointerDown(e, canvas) {
         )
     ) {
         activeImage.mode = "resize-ver";
-        activeImage.startState = startState;
+        activeImage.startState = makeStartState(activeImage.mode);
         return true;
     }
 
@@ -224,58 +272,45 @@ export function imagePointerMove(e, canvas) {
         activeImage.mode === "resize-hor" ||
         activeImage.mode === "resize-ver"
     ) {
-        const v = toLocalPoint(pos.x, pos.y);
         const s = activeImage.startState;
+        const cos = Math.cos(activeImage.rotation);
+        const sin = Math.sin(activeImage.rotation);
 
-        // Вычисляем фиксированный угол (противоположный)
-        let fixed = { x: 0, y: 0 };
-        if (activeImage.mode === "resize-prop") fixed = { x: 0, y: 0 };
-        else if (activeImage.mode === "resize-hor")
-            fixed = { x: 0, y: activeImage.height };
-        else if (activeImage.mode === "resize-ver")
-            fixed = { x: activeImage.width, y: 0 };
-
-        // dx/dy в локальной системе
-        let dx = v.x - s.local.x;
-        let dy = v.y - s.local.y;
+        // вектор якорь → курсор в локальных осях картинки
+        const wx = pos.x - s.anchorWorld.x;
+        const wy = pos.y - s.anchorWorld.y;
+        const dx = wx * cos + wy * sin;
+        const dy = -wx * sin + wy * cos;
 
         let newW = s.width;
         let newH = s.height;
 
         if (activeImage.mode === "resize-prop") {
-            newW = s.width + dx;
-            newH = newW / s.aspect;
+            // проекция на диагональ — пропорции сохраняются
+            const k =
+                (dx * s.width + dy * s.height) /
+                (s.width * s.width + s.height * s.height);
+            const kMin = 20 / Math.min(s.width, s.height);
+            newW = s.width * Math.max(kMin, k);
+            newH = s.height * Math.max(kMin, k);
         } else if (activeImage.mode === "resize-hor") {
-            newW = s.width + dx;
+            newW = Math.max(20, dx);
         } else if (activeImage.mode === "resize-ver") {
-            newH = s.height + dy;
+            newH = Math.max(20, dy);
         }
 
-        // ограничение минимального размера
-        newW = Math.max(20, newW);
-        newH = Math.max(20, newH);
-
-        // пересчёт центра, чтобы фиксированный угол остался на месте
-        const cos = Math.cos(activeImage.rotation);
-        const sin = Math.sin(activeImage.rotation);
-
-        const fx =
-            activeImage.x +
-            fixed.x * cos -
-            fixed.y * sin -
-            ((fixed.x * newW) / s.width) * cos +
-            ((fixed.y * newH) / s.height) * sin;
-        const fy =
-            activeImage.y +
-            fixed.x * sin +
-            fixed.y * cos -
-            ((fixed.x * newW) / s.width) * sin -
-            ((fixed.y * newH) / s.height) * cos;
+        // якорь в локальных координатах новой картинки (от левого верхнего угла)
+        const a = anchorLocal(activeImage.mode, newW, newH);
+        // центр = якорь − R·(a − size/2)
+        const lx = a.x - newW / 2;
+        const ly = a.y - newH / 2;
+        const cx = s.anchorWorld.x - (lx * cos - ly * sin);
+        const cy = s.anchorWorld.y - (lx * sin + ly * cos);
 
         activeImage.width = newW;
         activeImage.height = newH;
-        activeImage.x = fx;
-        activeImage.y = fy;
+        activeImage.x = cx - newW / 2;
+        activeImage.y = cy - newH / 2;
     } else if (activeImage.mode === "rotate") {
         const c = center();
         canvas.style.cursor = "grabbing";
@@ -330,6 +365,27 @@ function toLocalPoint(px, py) {
         x: dx * cos - dy * sin + activeImage.width / 2,
         y: dx * sin + dy * cos + activeImage.height / 2,
     };
+}
+
+// локальная точка (от левого верхнего угла) → WORLD
+function toWorldPoint(p) {
+    const c = center();
+    const lx = p.x - activeImage.width / 2;
+    const ly = p.y - activeImage.height / 2;
+    const cos = Math.cos(activeImage.rotation);
+    const sin = Math.sin(activeImage.rotation);
+
+    return {
+        x: c.x + lx * cos - ly * sin,
+        y: c.y + lx * sin + ly * cos,
+    };
+}
+
+// неподвижная точка для каждого режима ресайза (противоположна хэндлу)
+function anchorLocal(mode, w, h) {
+    if (mode === "resize-hor") return { x: 0, y: h / 2 }; // середина левой стороны
+    if (mode === "resize-ver") return { x: w / 2, y: 0 }; // середина верхней стороны
+    return { x: 0, y: 0 }; // левый верхний угол
 }
 
 // ---------------------------------

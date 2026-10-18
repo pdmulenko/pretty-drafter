@@ -7,7 +7,23 @@ import {
     hasActiveImage,
     deleteActiveImage,
     commitImage,
+    cancelActiveImage,
+    imageHitTest,
 } from "./image.js";
+import {
+    panStart,
+    panMove,
+    panEnd,
+    selectStart,
+    selectMove,
+    selectEnd,
+} from "./editing.js";
+import {
+    initTextTool,
+    textPointerDown,
+    commitText,
+    updateTextStyle,
+} from "./text.js";
 import {
     initFiguresTool,
     setFigureTool,
@@ -32,6 +48,7 @@ let color = "black";
 let layer = "botlayer";
 let lightColor = "rgb(170,170,170)";
 let lineWidth = 2;
+let thicknessJustChanged = false; // толщину выбрали вручную после последней смены инструмента
 let lastPos = null;
 let smoothPos = null;
 
@@ -44,7 +61,15 @@ const geom = [
     "trapezoid",
     "circle",
 ];
-const tools = [...pens, ...geom];
+const drawTools = ["pencil", "highlighter", "line", "text"]; // цикл по D
+const editTools = ["eraser", "hand", "select"]; // цикл по E
+const solids = ["cube", "prism3", "prism6", "pyramid3", "pyramid4", "pyramid6"]; // цикл по S
+const graphs = ["parabola", "hyperbola", "sine"]; // цикл по F
+const figureTools = [...geom, ...solids, ...graphs];
+const tools = [...drawTools, ...figureTools, ...editTools];
+const boardLayers = ["boardTopCanvas", "boardMiddleCanvas", "boardBottomCanvas"];
+
+initTextTool(() => mainCtx);
 
 // ---------------------------------
 // ------- обработка курсора -------
@@ -59,6 +84,8 @@ function getCanvasPos(e, canvas) {
 }
 
 export function commitDrawing() {
+    // холсты ещё без размера (страница открыта в фоновой вкладке) — сводить нечего
+    if (!tempCanvas.width || !tempCanvas.height) return;
     if (mainCtx != null) {
         if (tool === "highlighter") {
             mainCtx.globalCompositeOperation = "multiply";
@@ -78,8 +105,34 @@ export function commitDrawing() {
 
 topCanvas.addEventListener("pointerdown", (e) => {
     if (e.button !== 0) return;
+    // начали рисовать — выбор толщины больше не «только что»
+    thicknessJustChanged = false;
+
+    // выделение: клик мимо плавающего фрагмента — кладём его и начинаем новое
+    if (tool === "select" && hasActiveImage() && !imageHitTest(e, mainCanvas)) {
+        commitImage();
+        topCanvas.style.cursor = "";
+    }
 
     if (imagePointerDown(e, mainCanvas)) return;
+
+    const pos = getCanvasPos(e, mainCanvas);
+    if (tool === "hand") {
+        panStart(
+            pos,
+            boardLayers.map((id) => document.getElementById(id)),
+        );
+        topCanvas.style.cursor = "grabbing";
+        return;
+    }
+    if (tool === "select") {
+        selectStart(pos);
+        return;
+    }
+    if (tool === "text") {
+        textPointerDown(pos, { color, lineWidth });
+        return;
+    }
 
     if (pens.includes(tool) && tool !== "line") {
         drawing = true;
@@ -103,6 +156,8 @@ topCanvas.addEventListener("pointerdown", (e) => {
 topCanvas.addEventListener("pointermove", (e) => {
     if (imagePointerMove(e, mainCanvas)) return;
     if (figuresPointerMove(e, mainCanvas)) return;
+    if (panMove(getCanvasPos(e, mainCanvas))) return;
+    if (selectMove(getCanvasPos(e, mainCanvas), tempCtx, tempCanvas)) return;
 
     if (tool === "eraser" || tool === "highlighter") {
         cursorCircle.style.left = e.pageX + "px";
@@ -132,6 +187,9 @@ topCanvas.addEventListener("pointermove", (e) => {
 function stopDrawing(e) {
     imagePointerUp(e, mainCanvas);
     figuresPointerUp(e, mainCanvas);
+    panEnd();
+    if (tool === "hand") topCanvas.style.cursor = "grab";
+    selectEnd(mainCanvas, mainCtx, tempCtx, tempCanvas);
     drawing = false;
     lastPos = null;
     smoothPos = null;
@@ -194,9 +252,14 @@ function updateCursor() {
             cursorCircle.style.height = lineWidth * 14 + "px";
         }
     }
+    if (tool === "hand") topCanvas.style.cursor = "grab";
+    else if (tool === "text") topCanvas.style.cursor = "text";
 }
 
 function setActiveTool(newTool) {
+    const prevTool = tool;
+    // недописанный текст кладём на доску
+    commitText();
     // сведение слоя после highlighter и pencil
     if (pens.includes(tool) && tool !== "eraser") commitDrawing();
     if (tool === "highlighter") tempCanvas.classList.remove("highlighter"); //, "active");
@@ -220,8 +283,8 @@ function setActiveTool(newTool) {
     if (hasActiveGeom()) commitGeom();
 
     // подсветка выбранного инструмента
+    document.getElementById(tool)?.classList.add("active");
     if (pens.includes(tool)) {
-        document.getElementById(tool).classList.add("active");
         if (tool === "highlighter") {
             tempCanvas.classList.add("highlighter"); //, "active");
             tempCtx.globalCompositeOperation = "multiply";
@@ -232,7 +295,7 @@ function setActiveTool(newTool) {
         } else if (tool === "line") setFigureTool(tool);
     }
 
-    geom.forEach((toolId) => {
+    figureTools.forEach((toolId) => {
         if (tool === toolId) {
             document.getElementById(toolId).classList.add("active");
             //tempCanvas.classList.remove("highlighter"); //, "active");
@@ -247,8 +310,11 @@ function setActiveTool(newTool) {
         else btn.classList.remove("active");
     });
 
-    // сброс толщины
-    document.getElementById("midthick").click();
+    // сброс толщины (если её только что не выбрали вручную перед сменой инструмента)
+    // (Enter/X в геометрии вызывают setActiveTool с тем же инструментом — там не сбрасываем)
+    if (!thicknessJustChanged && newTool !== prevTool)
+        setThickness(document.getElementById("midthick"));
+    thicknessJustChanged = false;
 
     // подсветка активного слоя
     document.querySelectorAll(".layerBtn").forEach((btn) => {
@@ -294,6 +360,7 @@ document.querySelectorAll(".colorBtn").forEach((btn) => {
         if (tool !== "eraser") {
             color = btn.style.background;
             lightColor = btn.dataset.light;
+            updateTextStyle({ color, lineWidth });
             // подсветка выбранного цвета
             document
                 .querySelectorAll(".colorBtn")
@@ -303,15 +370,21 @@ document.querySelectorAll(".colorBtn").forEach((btn) => {
     };
 });
 
+function setThickness(btn) {
+    lineWidth = parseInt(btn.dataset.size);
+    // подсветка активной толщины
+    document
+        .querySelectorAll(".thicknessBtn")
+        .forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    updateCursor();
+    updateTextStyle({ color, lineWidth });
+}
+
 document.querySelectorAll(".thicknessBtn").forEach((btn) => {
     btn.onclick = () => {
-        lineWidth = parseInt(btn.dataset.size);
-        // подсветка активной толщины
-        document
-            .querySelectorAll(".thicknessBtn")
-            .forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-        updateCursor();
+        setThickness(btn);
+        thicknessJustChanged = true;
     };
 });
 
@@ -388,8 +461,22 @@ document.querySelectorAll(".visibilityBtn").forEach((btn) => {
 // ---------- клавиатура -----------
 // ---------------------------------
 
+// следующий инструмент группы (или первый, если сейчас выбран чужой)
+function nextInGroup(group) {
+    const i = group.indexOf(tool);
+    return i !== -1 ? group[(i + 1) % group.length] : group[0];
+}
+
 window.addEventListener("keydown", (e) => {
     if (e.repeat) return;
+    // во время набора текста клавиши обрабатывает поле ввода
+    if (e.target.tagName === "TEXTAREA") return;
+    // справка: «?» открывает и закрывает, пока она открыта — остальное не работает
+    if (e.key === "?") {
+        toggleHelp();
+        return;
+    }
+    if (helpDialog.open) return;
 
     if (e.code === "KeyC") {
         const buttons = [...document.querySelectorAll(".colorBtn")];
@@ -412,25 +499,40 @@ window.addEventListener("keydown", (e) => {
 
         buttons[(i + 1) % buttons.length].click();
     } else if (e.code === "KeyD") {
-        const i = pens.indexOf(tool);
-        const newTool = i !== -1 ? pens[(i + 1) % pens.length] : pens[0];
+        const i = drawTools.indexOf(tool);
+        const newTool =
+            i !== -1 ? drawTools[(i + 1) % drawTools.length] : drawTools[0];
+        setActiveTool(newTool);
+    } else if (e.code === "KeyE") {
+        const i = editTools.indexOf(tool);
+        const newTool =
+            i !== -1 ? editTools[(i + 1) % editTools.length] : editTools[0];
         setActiveTool(newTool);
     } else if (e.code === "KeyG") {
-        const i = geom.indexOf(tool);
-        const newTool = i !== -1 ? geom[(i + 1) % geom.length] : geom[0];
-        setActiveTool(newTool);
+        setActiveTool(nextInGroup(geom));
+    } else if (e.code === "KeyS" && !e.metaKey && !e.ctrlKey) {
+        setActiveTool(nextInGroup(solids));
+    } else if (e.code === "KeyF" && !e.metaKey && !e.ctrlKey) {
+        setActiveTool(nextInGroup(graphs));
     } else if (e.key === "Enter") {
         // завершаем работу с геометрией/картинкой
         if (!hasActiveGeom() && !hasActiveImage()) return;
-        if (hasActiveImage()) setActiveTool("pencil");
-        else setActiveTool(tool);
-    } else if (e.key === "Escape") {
+        // вставленная картинка → карандаш, выделение остаётся выделением
+        setActiveTool(tool === "picture" ? "pencil" : tool);
+    } else if (e.code === "KeyX" && !e.ctrlKey && !e.metaKey) {
         // отменяем работу с геометрией/картинкой
+        // (не Esc: в полноэкранном режиме macOS он выходит из полноэкранного режима)
         if (!hasActiveGeom() && !hasActiveImage()) return;
-        if (hasActiveImage()) tool = "pencil";
-        deleteActiveImage();
+        if (tool === "picture") tool = "pencil";
+        // для выделения X возвращает фрагмент на место
+        cancelActiveImage();
         deleteActiveGeom();
         setActiveTool(tool);
+    } else if (e.key === "Delete" || e.key === "Backspace") {
+        // удалить плавающий фрагмент/картинку вместе с содержимым
+        if (!hasActiveImage()) return;
+        deleteActiveImage();
+        if (tool === "picture") setActiveTool("pencil");
     } else if (e.key.toLowerCase() === "z" && (e.ctrlKey || e.metaKey)) {
         // отменяем последний нарисованный элемент
         if (pens.includes(tool) && tool !== "eraser")
@@ -464,11 +566,15 @@ window.addEventListener("keydown", (e) => {
 
 function resizeCanvas(canvas, ctx) {
     const dpr = window.devicePixelRatio || 1;
-    const rect = { width: window.innerWidth, height: window.innerHeight - 50 };
+    const wrapper = document.getElementById("canvasWrapper");
+    const rect = { width: wrapper.clientWidth, height: wrapper.clientHeight };
+    if (!rect.width || !rect.height) return;
 
-    // Сохраняем текущее содержимое
-    const img = new Image();
-    img.src = canvas.toDataURL();
+    // Сохраняем текущее содержимое (синхронно — повторные вызовы подряд безопасны)
+    const img = document.createElement("canvas");
+    img.width = canvas.width;
+    img.height = canvas.height;
+    if (canvas.width && canvas.height) img.getContext("2d").drawImage(canvas, 0, 0);
 
     // Устанавливаем новые размеры
     canvas.width = rect.width * dpr;
@@ -479,7 +585,8 @@ function resizeCanvas(canvas, ctx) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     // Восстанавливаем содержимое
-    img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height);
+    if (img.width && img.height)
+        ctx.drawImage(img, 0, 0, rect.width, rect.height);
 }
 
 function resizeAllCanvases() {
@@ -505,6 +612,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
 window.addEventListener("resize", () => {
     resizeAllCanvases();
+});
+
+// блоки тулбара переносятся на новую строку — доска начинается под тулбаром
+const toolbar = document.getElementById("toolbar");
+new ResizeObserver(() => {
+    const h = toolbar.offsetHeight + "px";
+    if (document.documentElement.style.getPropertyValue("--toolbar-h") === h)
+        return;
+    document.documentElement.style.setProperty("--toolbar-h", h);
+    resizeAllCanvases();
+}).observe(toolbar);
+
+// ---------------------------------
+// ------------ справка ------------
+// ---------------------------------
+
+const helpDialog = document.getElementById("helpDialog");
+
+function toggleHelp() {
+    if (helpDialog.open) helpDialog.close();
+    else helpDialog.showModal();
+}
+
+document.getElementById("helpBtn").onclick = toggleHelp;
+helpDialog.querySelector(".closeHelp").onclick = () => helpDialog.close();
+// клик по затемнению вокруг окна закрывает справку
+helpDialog.addEventListener("click", (e) => {
+    const r = helpDialog.getBoundingClientRect();
+    const outside =
+        e.clientX < r.left ||
+        e.clientX > r.right ||
+        e.clientY < r.top ||
+        e.clientY > r.bottom;
+    if (outside) helpDialog.close();
 });
 
 // ---------------------------------
