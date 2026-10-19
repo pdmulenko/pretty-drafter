@@ -1,4 +1,4 @@
-# ✨ Pretty Drafter
+# <img src="icons/favicon.svg" alt="" width="32" height="32"> Pretty Drafter
 
 A browser-based whiteboard for teaching, studying, and explaining ideas —  
 built for pen input and geometry.
