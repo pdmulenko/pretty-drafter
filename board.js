@@ -478,8 +478,11 @@ window.addEventListener("keydown", (e) => {
     }
     if (helpDialog.open) return;
 
-    // Ctrl/Cmd + C — копировать выделение (до цикла цветов по C)
-    if (e.code === "KeyC" && (e.ctrlKey || e.metaKey)) {
+    // Ctrl/Cmd + C — копировать выделение (до цикла цветов по C);
+    // клавишу узнаём и по code, и по key: у части способов ввода code пустой,
+    // а в русской раскладке key — кириллическая «с»
+    const isC = e.code === "KeyC" || ["c", "C", "с", "С"].includes(e.key);
+    if (isC && (e.ctrlKey || e.metaKey)) {
         if (hasActiveImage() && (tool === "select" || tool === "picture")) {
             e.preventDefault();
             copySelection();
@@ -673,7 +676,8 @@ let clip = null;
 function copySelection() {
     const snap = snapshotActiveImage();
     if (!snap) return;
-    clip = { ...snap, system: false };
+    // fresh: после копирования окно не теряло фокус — в другой программе ничего не копировали
+    clip = { ...snap, system: false, fresh: true };
 
     // кладём и в системный буфер — тогда фрагмент можно вставить и в другую программу
     try {
@@ -706,8 +710,21 @@ function pasteClip() {
     });
 }
 
+// ушли в другую программу — там могли скопировать своё, тогда верим системному буферу
+window.addEventListener("blur", () => {
+    if (clip) clip.fresh = false;
+});
+
 document.addEventListener("paste", (e) => {
     if (e.target.tagName === "TEXTAREA") return;
+
+    // только что скопировали здесь же — вставляем из памяти: системный буфер
+    // мог ещё не обновиться или отказать в записи, и там лежит прошлый фрагмент
+    if (clip?.fresh) {
+        e.preventDefault();
+        pasteClip();
+        return;
+    }
 
     const item = [...e.clipboardData.items].find((i) =>
         i.type.startsWith("image/"),

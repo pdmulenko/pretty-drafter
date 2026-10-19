@@ -401,6 +401,43 @@ async function imagesAndSelection() {
     await t.pasteEmpty();
     ok("next paste cascades to +40px", t.ink(BOT, 115, 115, 10, 10) > 0 && t.ink(TMP, 135, 135, 10, 10) > 0);
     t.key("Enter", "Enter");
+
+    // баг: в системном буфере остался прошлый фрагмент — вставлялся он, а не новая копия
+    t.clearAll();
+    t.block(100, 100, 80, 40);
+    t.tool("select");
+    t.drag(90, 90, 190, 150); // A: 100×60
+    t.key("c", "KeyC", { metaKey: true });
+    t.key("Enter", "Enter");
+    t.block(400, 100, 160, 80);
+    t.tool("select");
+    t.drag(390, 90, 570, 190); // B: 180×100
+    t.key("c", "KeyC", { metaKey: true });
+    await sleep(100);
+    await t.pasteImage(Math.ceil(100 * t.dpr), Math.ceil(60 * t.dpr)); // в буфере всё ещё A
+    ok("paste right after Cmd+C uses the new copy, not a stale clipboard", t.ink(TMP, 420, 120, 160, 80) > 0 && t.ink(TMP, 110, 110, 10, 10) === 0 && t.active() === "select");
+    t.key("x", "KeyX");
+
+    // ушли из окна (могли скопировать что-то в другой программе) — верим системному буферу
+    t.drag(390, 90, 570, 190);
+    t.key("c", "KeyC", { metaKey: true });
+    t.win.dispatchEvent(new t.win.Event("blur"));
+    await t.pasteImage(300, 120);
+    ok("after leaving the window, paste takes the system clipboard image", t.ink(TMP, W / 2 - 5, H / 2 - 5, 10, 10) > 0 && t.active() === undefined);
+    t.key("x", "KeyX");
+
+    // Cmd+C узнаётся и без code (часть способов ввода), и в русской раскладке
+    for (const [k, code, label] of [["c", "", "empty code"], ["с", "KeyC", "Russian layout"]]) {
+        t.clearAll();
+        t.block(100, 100, 80, 40);
+        t.tool("select");
+        t.drag(90, 90, 190, 150);
+        t.key(k, code, { metaKey: true });
+        await sleep(100);
+        await t.pasteEmpty();
+        ok(`Cmd+C works with ${label}`, t.ink(TMP, 115, 115, 60, 30) > 0 && t.ink(BOT, 95, 95, 60, 30) > 0);
+        t.key("Enter", "Enter");
+    }
     t.clearAll();
     t.block(100, 300, 80, 40);
     t.tool("select");

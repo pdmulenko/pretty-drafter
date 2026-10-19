@@ -1,4 +1,11 @@
-## Unreleased
+## v1.4.1 — 2026-10-20
+
+### Fixed
+
+- `Cmd + C` was not recognized when the browser reported an empty key code
+- `Cmd + V` right after `Cmd + C` could paste the previously copied fragment from the system clipboard
+
+## v1.4 — 2026-10-20
 
 ### Main features
 
