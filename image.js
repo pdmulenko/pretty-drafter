@@ -73,6 +73,30 @@ export function insertImageAt(img, { x, y, width, height }, onCancel = null) {
     draw();
 }
 
+// снимок плавающего фрагмента как он выглядит сейчас (размер, поворот):
+// холст в физических пикселях + его габарит на доске
+export function snapshotActiveImage() {
+    if (!activeImage) return null;
+    const { img, width: w, height: h, rotation: a } = activeImage;
+    const c = center();
+
+    const cos = Math.abs(Math.cos(a));
+    const sin = Math.abs(Math.sin(a));
+    const bw = w * cos + h * sin;
+    const bh = w * sin + h * cos;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.ceil(bw * dpr);
+    canvas.height = Math.ceil(bh * dpr);
+    const ctx = canvas.getContext("2d");
+    ctx.scale(dpr, dpr);
+    ctx.translate(bw / 2, bh / 2);
+    ctx.rotate(a);
+    ctx.drawImage(img, -w / 2, -h / 2, w, h);
+
+    return { canvas, x: c.x - bw / 2, y: c.y - bh / 2, width: bw, height: bh };
+}
+
 // X: для выделения возвращаем содержимое на место, для вставки — просто убираем
 export function cancelActiveImage() {
     if (!activeImage) return;

@@ -26,6 +26,13 @@ body {
     z-index: 1000;
 }
 
+/* группа блоков, которая не разрывается при переносе (слои) */
+#toolbar .toolGroup {
+    display: flex;
+    flex-wrap: nowrap;
+    column-gap: 20px;
+}
+
 #toolbar .toolBlock {
     display: flex;
     flex-direction: column;

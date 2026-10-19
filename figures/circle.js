@@ -166,6 +166,14 @@ export function drawCircleEdit(ctx, g, final = false) {
     ctx.stroke();
 
     if (!final) {
+        // габаритная рамка, к углу которой привязан хэндл NW (как у тел и графиков)
+        ctx.save();
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.5;
+        ctx.setLineDash([4, 4]);
+        ctx.strokeRect(-rx, -ry, rx * 2, ry * 2);
+        ctx.restore();
+
         ctx.fillStyle = "#4aa3ff";
         const pts = [
             { x: -rx, y: -ry }, // 0 NW — пропорциональный

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Pretty Drafter — tests</title>
+        <link rel="icon" type="image/svg+xml" href="../icons/favicon.svg" />
+        <style>
+            body {
+                margin: 0;
+                font: 14px/1.4 -apple-system, "Helvetica Neue", Arial, sans-serif;
+                display: flex;
+                height: 100vh;
+            }
+            #app {
+                width: 1200px;
+                height: 800px;
+                border: none;
+                border-right: 1px solid #ccc;
+                flex: none;
+            }
+            #report {
+                flex: 1;
+                overflow: auto;
+                padding: 12px 16px;
+            }
+            #summary {
+                font-size: 18px;
+                font-weight: 600;
+                margin-bottom: 8px;
+            }
+            .pass {
+                color: #1a7f37;
+            }
+            .fail {
+                color: #cf222e;
+                font-weight: 600;
+            }
+            .group {
+                margin: 12px 0 4px;
+                font-weight: 600;
+            }
+            .row {
+                font-family: ui-monospace, Menlo, monospace;
+                font-size: 12px;
+                white-space: pre-wrap;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- доска во фрейме фиксированного размера: координаты тестов от него и считаются -->
+        <iframe id="app" src="../index.html"></iframe>
+        <div id="report">
+            <div id="summary">Running…</div>
+            <div id="log"></div>
+        </div>
+        <script type="module" src="tests.js"></script>
+    </body>
+</html>

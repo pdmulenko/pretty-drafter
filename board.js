@@ -8,6 +8,8 @@ import {
     deleteActiveImage,
     commitImage,
     cancelActiveImage,
+    insertImageAt,
+    snapshotActiveImage,
     imageHitTest,
 } from "./image.js";
 import {
@@ -52,7 +54,9 @@ let thicknessJustChanged = false; // толщину выбрали вручну�
 let lastPos = null;
 let smoothPos = null;
 
-const pens = ["pencil", "eraser", "highlighter", "line"];
+const pens = ["pencil", "marker", "eraser", "highlighter", "line"];
+// инструменты с курсором-кольцом: во сколько раз линия толще выбранной толщины
+const ringTools = { marker: 6, highlighter: 14, eraser: 20 };
 const geom = [
     "polyline",
     "triangle",
@@ -61,7 +65,7 @@ const geom = [
     "trapezoid",
     "circle",
 ];
-const drawTools = ["pencil", "highlighter", "line", "text"]; // цикл по D
+const drawTools = ["pencil", "marker", "highlighter", "line", "text"]; // цикл по D
 const editTools = ["eraser", "hand", "select"]; // цикл по E
 const solids = ["cube", "prism3", "prism6", "pyramid3", "pyramid4", "pyramid6"]; // цикл по S
 const graphs = ["parabola", "hyperbola", "sine"]; // цикл по F
@@ -144,7 +148,8 @@ topCanvas.addEventListener("pointerdown", (e) => {
         const ctx = tool === "eraser" ? mainCtx : tempCtx;
         applyToolSettings(ctx);
 
-        if (tool === "pencil" || tool === "highlighter") commitDrawing();
+        // прошлый штрих сводим в слой — отменить можно только последний
+        if (tool !== "eraser") commitDrawing();
 
         ctx.beginPath();
         ctx.moveTo(lastPos.x, lastPos.y);
@@ -159,7 +164,7 @@ topCanvas.addEventListener("pointermove", (e) => {
     if (panMove(getCanvasPos(e, mainCanvas))) return;
     if (selectMove(getCanvasPos(e, mainCanvas), tempCtx, tempCanvas)) return;
 
-    if (tool === "eraser" || tool === "highlighter") {
+    if (ringTools[tool]) {
         cursorCircle.style.left = e.pageX + "px";
         cursorCircle.style.top = e.pageY + "px";
     }
@@ -221,36 +226,31 @@ function applyToolSettings(ctx, Tool = null) {
 
     if (Tool === "eraser") {
         ctx.globalCompositeOperation = "destination-out";
-        ctx.lineWidth = lineWidth * 20;
     } else if (Tool === "highlighter") {
         ctx.globalCompositeOperation = "source-over";
         ctx.strokeStyle = lightColor;
-        ctx.lineWidth = lineWidth * 14;
     } else {
-        // pencil
+        // pencil, marker
         ctx.globalCompositeOperation = "source-over";
         ctx.strokeStyle = color;
-        ctx.lineWidth = lineWidth;
     }
+    ctx.lineWidth = lineWidth * (ringTools[Tool] ?? 1);
 }
 
 function updateCursor() {
     topCanvas.style.cursor = "";
-    if (tool !== "eraser" && tool !== "highlighter") {
+    if (!ringTools[tool]) {
         topCanvas.classList.add("pencilCursor");
         topCanvas.classList.remove("eraserCursor");
         cursorCircle.style.left = "-100px"; // прячем кружок
         cursorCircle.style.top = "-100px";
     } else {
+        // кольцо размером с линию
         topCanvas.classList.remove("pencilCursor");
         topCanvas.classList.add("eraserCursor");
-        if (tool === "eraser") {
-            cursorCircle.style.width = lineWidth * 20 + "px";
-            cursorCircle.style.height = lineWidth * 20 + "px";
-        } else {
-            cursorCircle.style.width = lineWidth * 14 + "px";
-            cursorCircle.style.height = lineWidth * 14 + "px";
-        }
+        const size = lineWidth * ringTools[tool] + "px";
+        cursorCircle.style.width = size;
+        cursorCircle.style.height = size;
     }
     if (tool === "hand") topCanvas.style.cursor = "grab";
     else if (tool === "text") topCanvas.style.cursor = "text";
@@ -478,6 +478,15 @@ window.addEventListener("keydown", (e) => {
     }
     if (helpDialog.open) return;
 
+    // Ctrl/Cmd + C — копировать выделение (до цикла цветов по C)
+    if (e.code === "KeyC" && (e.ctrlKey || e.metaKey)) {
+        if (hasActiveImage() && (tool === "select" || tool === "picture")) {
+            e.preventDefault();
+            copySelection();
+        }
+        return;
+    }
+
     if (e.code === "KeyC") {
         const buttons = [...document.querySelectorAll(".colorBtn")];
 
@@ -605,24 +614,30 @@ function resizeAllCanvases() {
     });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+// блоки тулбара переносятся на новую строку — доска начинается под тулбаром
+const toolbar = document.getElementById("toolbar");
+
+// true, если высота тулбара изменилась (тогда холсты уже пересчитаны)
+function syncToolbarHeight() {
+    const h = toolbar.offsetHeight + "px";
+    if (document.documentElement.style.getPropertyValue("--toolbar-h") === h)
+        return false;
+    document.documentElement.style.setProperty("--toolbar-h", h);
     resizeAllCanvases();
+    return true;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    if (!syncToolbarHeight()) resizeAllCanvases();
     setActiveTool("pencil");
 });
 
 window.addEventListener("resize", () => {
-    resizeAllCanvases();
+    if (!syncToolbarHeight()) resizeAllCanvases();
 });
 
-// блоки тулбара переносятся на новую строку — доска начинается под тулбаром
-const toolbar = document.getElementById("toolbar");
-new ResizeObserver(() => {
-    const h = toolbar.offsetHeight + "px";
-    if (document.documentElement.style.getPropertyValue("--toolbar-h") === h)
-        return;
-    document.documentElement.style.setProperty("--toolbar-h", h);
-    resizeAllCanvases();
-}).observe(toolbar);
+// перенос может случиться и без ресайза окна (например, догрузились шрифты)
+new ResizeObserver(syncToolbarHeight).observe(toolbar);
 
 // ---------------------------------
 // ------------ справка ------------
@@ -652,17 +667,75 @@ helpDialog.addEventListener("click", (e) => {
 // ------- вставка картинки --------
 // ---------------------------------
 
+// последний скопированный фрагмент (Ctrl/Cmd + C в режиме выделения)
+let clip = null;
+
+function copySelection() {
+    const snap = snapshotActiveImage();
+    if (!snap) return;
+    clip = { ...snap, system: false };
+
+    // кладём и в системный буфер — тогда фрагмент можно вставить и в другую программу
+    try {
+        const blob = new Promise((resolve) =>
+            snap.canvas.toBlob(resolve, "image/png"),
+        );
+        navigator.clipboard
+            .write([new ClipboardItem({ "image/png": blob })])
+            .then(() => {
+                if (clip?.canvas === snap.canvas) clip.system = true;
+            })
+            .catch(() => {});
+    } catch {
+        // буфер недоступен — вставим из памяти
+    }
+}
+
+// копия вставляется рядом с оригиналом в том же размере и остаётся выделенной
+function pasteClip() {
+    if (tool !== "select") setActiveTool("select");
+    else commitImage();
+
+    clip.x += 20;
+    clip.y += 20;
+    insertImageAt(clip.canvas, {
+        x: clip.x,
+        y: clip.y,
+        width: clip.width,
+        height: clip.height,
+    });
+}
+
 document.addEventListener("paste", (e) => {
+    if (e.target.tagName === "TEXTAREA") return;
+
     const item = [...e.clipboardData.items].find((i) =>
         i.type.startsWith("image/"),
     );
 
-    if (!item) return;
+    if (!item) {
+        // системный буфер не принял картинку — берём скопированное из памяти
+        if (clip && !clip.system) pasteClip();
+        return;
+    }
 
     const file = item.getAsFile();
     const img = new Image();
 
     img.onload = () => {
+        // это наш же фрагмент — вставляем как копию, а не как новую картинку
+        // (узнаём по размеру: подтверждение записи в буфер может прийти позже вставки)
+        if (
+            clip &&
+            img.naturalWidth === clip.canvas.width &&
+            img.naturalHeight === clip.canvas.height
+        ) {
+            pasteClip();
+            return;
+        }
+        // сдвинутое выделение или прошлая картинка — сначала на доску,
+        // иначе новая картинка займёт их место и они пропадут
+        commitImage();
         setActiveTool("picture");
         //tempCanvas.classList.add("active");
         insertImage(img);

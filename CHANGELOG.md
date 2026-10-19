@@ -1,3 +1,22 @@
+## Unreleased
+
+### Main features
+
+- **Marker** in drawing tools: thick lines in the current color, with a ring cursor like the highlighter and eraser
+- `Ctrl + C` / `Cmd + C` copies the current selection; `Ctrl + V` / `Cmd + V` pastes the copy next to the original in the same size (the copy also goes to the system clipboard)
+
+### Settings adjustments
+
+- Toolbar titles: **Graphs** → **Functions**, **Solids** → **Solid shapes**, **Drawing tools** → **Drawing**, so each title starts with its shortcut letter
+- The three layer blocks wrap onto a new line only together
+- Circle shows a thin dashed frame while editing, like solids and functions
+
+### Fixed
+
+- `Cmd + C` / `Ctrl + C` cycled colors
+- Pasting an image after moving a selection (or over another pasted image) made the selection disappear
+- The top of the board could stay under a wrapped toolbar if the page was opened in a background tab
+
 ## v1.3 — 2026-10-18
 
 ### Main features

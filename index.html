@@ -13,7 +13,7 @@
         <div id="toolbar">
             <!-- инструменты рисования -->
             <div class="toolBlock">
-                <div class="toolblock-title">Drawing tools (D)</div>
+                <div class="toolblock-title">Drawing (D)</div>
                 <div class="toolblock-buttons">
                     <button id="pencil" title="Pencil tool">
                         <svg
@@ -22,6 +22,11 @@
                             preserveAspectRatio="xMidYMid meet"
                         >
                             <use href="./icons.svg#fa-pencil" />
+                        </svg>
+                    </button>
+                    <button id="marker" title="Marker: thick lines">
+                        <svg class="fa-icon">
+                            <use href="./icons.svg#fa-marker" />
                         </svg>
                     </button>
                     <button id="highlighter" title="Highlighter tool">
@@ -103,7 +108,7 @@
 
             <!-- тела -->
             <div class="toolBlock">
-                <div class="toolblock-title">Solids (S)</div>
+                <div class="toolblock-title">Solid shapes (S)</div>
                 <div class="toolblock-buttons">
                     <button id="cube" title="Cube / cuboid (Shift: cube)">
                         <svg class="fa-icon">
@@ -140,7 +145,7 @@
 
             <!-- графики функций -->
             <div class="toolBlock">
-                <div class="toolblock-title">Graphs (F)</div>
+                <div class="toolblock-title">Functions (F)</div>
                 <div class="toolblock-buttons">
                     <button id="parabola" title="Parabola y = x²">
                         <svg class="fa-icon">
@@ -304,6 +309,8 @@
                 </div>
             </div>
 
+            <!-- три слоя переносятся на новую строку только вместе -->
+            <div class="toolGroup">
             <!-- верхний слой -->
             <div class="toolBlock">
                 <div class="toolblock-title">Top layer (1)</div>
@@ -331,7 +338,7 @@
             </div>
             <!-- средний слой -->
             <div class="toolBlock">
-                <div class="toolblock-title">Middle Layer (2)</div>
+                <div class="toolblock-title">Middle layer (2)</div>
                 <div class="toolblock-buttons">
                     <button
                         id="midlayer"
@@ -385,6 +392,7 @@
                     </button>
                 </div>
             </div>
+            </div>
 
             <!-- о программе и горячие клавиши -->
             <div class="toolBlock helpBlock">
@@ -415,11 +423,11 @@
 
             <h3>Tools</h3>
             <table>
-                <tr><td><kbd>D</kbd></td><td>Cycle drawing tools (pencil, highlighter, line, text)</td></tr>
+                <tr><td><kbd>D</kbd></td><td>Cycle drawing tools (pencil, marker, highlighter, line, text)</td></tr>
                 <tr><td><kbd>E</kbd></td><td>Cycle editing tools (eraser, hand, selection)</td></tr>
                 <tr><td><kbd>G</kbd></td><td>Cycle geometry shapes</td></tr>
                 <tr><td><kbd>S</kbd></td><td>Cycle solids (cube, prisms, pyramids)</td></tr>
-                <tr><td><kbd>F</kbd></td><td>Cycle function graphs (parabola, hyperbola, sine)</td></tr>
+                <tr><td><kbd>F</kbd></td><td>Cycle functions (parabola, hyperbola, sine)</td></tr>
                 <tr><td><kbd>C</kbd></td><td>Cycle colors</td></tr>
                 <tr><td><kbd>T</kbd></td><td>Cycle thickness (for text: light / regular / bold)</td></tr>
                 <tr><td><kbd>B</kbd></td><td>Cycle backgrounds</td></tr>
@@ -430,9 +438,10 @@
                 <tr><td><kbd>Enter</kbd></td><td>Finish the current shape, image, selection or text</td></tr>
                 <tr><td><kbd>X</kbd></td><td>Cancel the current shape or image; put a selection back where it was</td></tr>
                 <tr><td><kbd>Delete</kbd></td><td>Delete the current selection or image</td></tr>
-                <tr><td><kbd>Shift</kbd></td><td>Hold for angle snapping (line), a square (rectangle), an equilateral triangle, or a square frame for solids and graphs (a true cube)</td></tr>
+                <tr><td><kbd>Shift</kbd></td><td>Hold for angle snapping (line), a square (rectangle), an equilateral triangle, or a square frame for solids and functions (a true cube)</td></tr>
                 <tr><td><kbd>Ctrl</kbd> + <kbd>Z</kbd></td><td>Undo the last drawing (except for eraser)</td></tr>
-                <tr><td><kbd>Ctrl</kbd> + <kbd>V</kbd></td><td>Insert an image from the clipboard</td></tr>
+                <tr><td><kbd>Ctrl</kbd> / <kbd>⌘</kbd> + <kbd>C</kbd></td><td>Copy the current selection</td></tr>
+                <tr><td><kbd>Ctrl</kbd> / <kbd>⌘</kbd> + <kbd>V</kbd></td><td>Paste the copied selection next to the original, or an image from the clipboard</td></tr>
                 <tr><td><kbd>Shift</kbd> + <kbd>Enter</kbd></td><td>New line while typing text</td></tr>
             </table>
 
