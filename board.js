@@ -437,7 +437,7 @@ document.querySelectorAll(".visibilityBtn").forEach((btn) => {
         const useEl = btn.querySelector("use");
         if (btn.classList.contains("active")) {
             curCanvas.style.visibility = "visible";
-            useEl.setAttribute("href", "./icons.svg#fa-visible");
+            useEl.setAttribute("href", "./icons.svg#icon-visible");
             btn.classList.remove("active");
             const activeCanvas = document.getElementById(layer);
             if (activeCanvas.dataset.canvas === btn.dataset.canvas) {
@@ -446,7 +446,7 @@ document.querySelectorAll(".visibilityBtn").forEach((btn) => {
             }
         } else {
             curCanvas.style.visibility = "hidden";
-            useEl.setAttribute("href", "./icons.svg#fa-invisible");
+            useEl.setAttribute("href", "./icons.svg#icon-invisible");
             btn.classList.add("active");
             const activeCanvas = document.getElementById(layer);
             if (activeCanvas.dataset.canvas === btn.dataset.canvas) {

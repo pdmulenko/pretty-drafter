@@ -1,3 +1,12 @@
+## v1.5 — 2026-10-23
+
+### Interface
+
+- Toolbar in the colors of the app icon: beige panel, graphite icons and titles; active buttons filled with the red of the eraser
+- Icons replaced with Tabler Icons (MIT); custom icons redrawn in the same style
+- Buttons with a thin border and a soft shadow, icons centered; the selected color gets a bold red border
+- Sans-serif font (Helvetica Neue / Helvetica / Arial)
+
 ## v1.4.1 — 2026-10-20
 
 ### Fixed

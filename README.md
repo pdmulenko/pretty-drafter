@@ -64,6 +64,11 @@ pointer and keyboard events and shows the results.
 
 See [CHANGELOG](CHANGELOG.md).
 
+## Credits
+
+Toolbar icons: [Tabler Icons](https://tabler.io/icons) (MIT License).
+Icons for polyline, parallelogram, trapezoid, solid shapes and functions are drawn in the same style.
+
 ## 📄 License
 
 [MIT](LICENSE)
